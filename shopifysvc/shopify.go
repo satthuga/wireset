@@ -20,7 +20,6 @@ const endpointTemplate = "https://%s.myshopify.com/admin/api/%s/graphql.json"
 var Wireset = wire.NewSet(
 	wire.Struct(new(ShopifyService), "*"),
 	NewShopifyApp,
-	NewShopifyApp,
 	ConfigFromEnv,
 )
 
