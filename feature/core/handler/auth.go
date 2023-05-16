@@ -1,14 +1,14 @@
 package handler
 
 import (
-	"api/pkg/configsvc"
-	model2 "api/pkg/model"
-	"api/pkg/pubsub"
-	repository2 "api/pkg/repository"
-	"api/pkg/shopifysvc"
 	"context"
 	"errors"
 	"firebase.google.com/go/auth"
+	"github.com/aiocean/wireset/configsvc"
+	model2 "github.com/aiocean/wireset/model"
+	"github.com/aiocean/wireset/pubsub"
+	repository2 "github.com/aiocean/wireset/repository"
+	"github.com/aiocean/wireset/shopifysvc"
 	"github.com/dgraph-io/ristretto"
 	"net/http"
 	"strings"

@@ -1,11 +1,11 @@
 package server
 
 import (
-	"api/pkg/configsvc"
-	"api/pkg/feature/core"
-	"api/pkg/pubsub"
-	"api/pkg/tracersvc"
 	"context"
+	"github.com/aiocean/wireset/configsvc"
+	"github.com/aiocean/wireset/feature/core"
+	"github.com/aiocean/wireset/pubsub"
+	"github.com/aiocean/wireset/tracersvc"
 	"github.com/pkg/errors"
 	"os"
 

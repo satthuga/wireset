@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"api/pkg/model"
 	"context"
 	"errors"
+	"github.com/aiocean/wireset/model"
 
 	"cloud.google.com/go/firestore"
 	"github.com/google/wire"

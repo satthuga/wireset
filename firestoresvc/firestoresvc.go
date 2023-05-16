@@ -1,9 +1,9 @@
 package firestoresvc
 
 import (
-	"api/pkg/firebasesvc"
 	"context"
 	"fmt"
+	"github.com/aiocean/wireset/firebasesvc"
 
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go"

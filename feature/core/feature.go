@@ -1,9 +1,9 @@
 package core
 
 import (
-	"api/pkg/feature/core/command"
-	event2 "api/pkg/feature/core/event"
-	handler2 "api/pkg/feature/core/handler"
+	"github.com/aiocean/wireset/feature/core/command"
+	event2 "github.com/aiocean/wireset/feature/core/event"
+	handler2 "github.com/aiocean/wireset/feature/core/handler"
 	"github.com/google/wire"
 )
 

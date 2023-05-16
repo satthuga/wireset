@@ -1,8 +1,8 @@
 package fiberapp
 
 import (
-	"api/pkg/configsvc"
-	"api/pkg/fiberapp/middleware"
+	"github.com/aiocean/wireset/configsvc"
+	"github.com/aiocean/wireset/fiberapp/middleware"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"

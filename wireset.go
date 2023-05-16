@@ -1,17 +1,17 @@
-package pkg
+package wireset
 
 import (
-	"api/pkg/cachesvc"
-	"api/pkg/configsvc"
-	"api/pkg/fiberapp"
-	"api/pkg/fireauthsvc"
-	"api/pkg/logsvc"
-	"api/pkg/pubsub"
-	"api/pkg/pubsub/router"
-	"api/pkg/repository"
-	"api/pkg/server"
-	"api/pkg/shopifysvc"
-	"api/pkg/tracersvc"
+	"github.com/aiocean/wireset/cachesvc"
+	"github.com/aiocean/wireset/configsvc"
+	"github.com/aiocean/wireset/fiberapp"
+	"github.com/aiocean/wireset/fireauthsvc"
+	"github.com/aiocean/wireset/logsvc"
+	"github.com/aiocean/wireset/pubsub"
+	"github.com/aiocean/wireset/pubsub/router"
+	"github.com/aiocean/wireset/repository"
+	"github.com/aiocean/wireset/server"
+	"github.com/aiocean/wireset/shopifysvc"
+	"github.com/aiocean/wireset/tracersvc"
 	"github.com/google/wire"
 )
 

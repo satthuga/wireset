@@ -1,10 +1,10 @@
 package repository
 
 import (
-	"api/pkg/firestoresvc"
-	"api/pkg/shopifysvc"
 	"context"
 	"errors"
+	"github.com/aiocean/wireset/firestoresvc"
+	"github.com/aiocean/wireset/shopifysvc"
 	"time"
 
 	"cloud.google.com/go/firestore"

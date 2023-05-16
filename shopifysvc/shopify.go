@@ -1,10 +1,10 @@
 package shopifysvc
 
 import (
-	"api/pkg/configsvc"
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/aiocean/wireset/configsvc"
 	"io"
 	"net/http"
 	"strings"

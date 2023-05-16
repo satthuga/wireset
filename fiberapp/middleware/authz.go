@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"api/pkg/configsvc"
-	model2 "api/pkg/model"
-	repository2 "api/pkg/repository"
+	"github.com/aiocean/wireset/configsvc"
+	model2 "github.com/aiocean/wireset/model"
+	repository2 "github.com/aiocean/wireset/repository"
 	"go.uber.org/zap"
 	"net/http"
 	"strings"

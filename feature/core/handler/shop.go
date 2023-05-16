@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"api/pkg/repository"
+	"github.com/aiocean/wireset/repository"
 	"github.com/gofiber/fiber/v2"
 	"net/http"
 

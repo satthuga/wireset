@@ -1,13 +1,13 @@
 package event
 
 import (
-	"api/pkg/configsvc"
-	model2 "api/pkg/model"
-	"api/pkg/pubsub"
-	"api/pkg/shopifysvc"
 	"context"
 	"firebase.google.com/go/auth"
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
+	"github.com/aiocean/wireset/configsvc"
+	model2 "github.com/aiocean/wireset/model"
+	"github.com/aiocean/wireset/pubsub"
+	"github.com/aiocean/wireset/shopifysvc"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )

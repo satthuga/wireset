@@ -1,9 +1,9 @@
 package event
 
 import (
-	"api/pkg/model"
-	"api/pkg/pubsub"
 	"context"
+	"github.com/aiocean/wireset/model"
+	"github.com/aiocean/wireset/pubsub"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"go.uber.org/zap"

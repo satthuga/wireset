@@ -1,10 +1,10 @@
 package command
 
 import (
-	"api/pkg/model"
-	"api/pkg/pubsub"
-	"api/pkg/shopifysvc"
 	"context"
+	"github.com/aiocean/wireset/model"
+	"github.com/aiocean/wireset/pubsub"
+	"github.com/aiocean/wireset/shopifysvc"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 )

@@ -1,7 +1,7 @@
 package tracersvc
 
 import (
-	"api/pkg/configsvc"
+	"github.com/aiocean/wireset/configsvc"
 	"github.com/google/wire"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )

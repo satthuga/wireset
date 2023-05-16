@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"api/pkg/model"
-	"api/pkg/pubsub"
-	"api/pkg/repository"
+	"github.com/aiocean/wireset/model"
+	"github.com/aiocean/wireset/pubsub"
+	"github.com/aiocean/wireset/repository"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
