@@ -8,17 +8,12 @@ import (
 )
 
 type ConfigService struct {
-	ServiceName  string
-	ClientSecret string
-	ClientId     string
-	ApiVersion   string
-	ServiceUrl   string
-	AppUrl       string
-	LoginNonce   string
-	Address      string
-	Port         string
-	Scope        string
-	Environment  string
+	ServiceName string
+	ServiceUrl  string
+	AppUrl      string
+	Address     string
+	Port        string
+	Environment string
 }
 
 type DatabaseConfig struct {
@@ -29,15 +24,10 @@ var Wireset = wire.NewSet(NewConfigService)
 
 func NewConfigService() (*ConfigService, error) {
 	configService := &ConfigService{
-		ServiceName:  os.Getenv("SERVICE_NAME"),
-		ClientSecret: os.Getenv("SHOPIFY_CLIENT_SECRET"),
-		ClientId:     os.Getenv("SHOPIFY_CLIENT_ID"),
-		ApiVersion:   os.Getenv("API_VERSION"),
-		ServiceUrl:   os.Getenv("SERVICE_URL"),
-		AppUrl:       os.Getenv("APP_URL"),
-		LoginNonce:   os.Getenv("LOGIN_NONCE"),
-		Scope:        os.Getenv("SCOPES"),
-		Environment:  os.Getenv("ENVIRONMENT"),
+		ServiceName: os.Getenv("SERVICE_NAME"),
+		ServiceUrl:  os.Getenv("SERVICE_URL"),
+		AppUrl:      os.Getenv("APP_URL"),
+		Environment: os.Getenv("ENVIRONMENT"),
 	}
 
 	if value, ok := os.LookupEnv("ENVIRONMENT"); ok {
@@ -52,40 +42,10 @@ func NewConfigService() (*ConfigService, error) {
 		return nil, errors.New("SERVICE_NAME is required")
 	}
 
-	if value, ok := os.LookupEnv("SCOPES"); ok {
-		configService.Scope = value
-	} else {
-		return nil, errors.New("SCOPES is required")
-	}
-
-	if value, ok := os.LookupEnv("SHOPIFY_CLIENT_SECRET"); ok {
-		configService.ClientSecret = value
-	} else {
-		return nil, errors.New("SHOPIFY_CLIENT_SECRET is required")
-	}
-
-	if value, ok := os.LookupEnv("SHOPIFY_CLIENT_ID"); ok {
-		configService.ClientId = value
-	} else {
-		return nil, errors.New("SHOPIFY_CLIENT_ID is required")
-	}
-
 	if value, ok := os.LookupEnv("SERVICE_URL"); ok {
 		configService.ServiceUrl = value
 	} else {
 		return nil, errors.New("SERVICE_URL is required")
-	}
-
-	if value, ok := os.LookupEnv("SHOPIFY_API_VERSION"); ok {
-		configService.ApiVersion = value
-	} else {
-		return nil, errors.New("SHOPIFY_API_VERSION is required")
-	}
-
-	if value, ok := os.LookupEnv("LOGIN_NONCE"); ok {
-		configService.LoginNonce = value
-	} else {
-		return nil, errors.New("LOGIN_NONCE is required")
 	}
 
 	if value, ok := os.LookupEnv("APP_URL"); ok {

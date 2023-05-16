@@ -10,43 +10,24 @@ import (
 	"strings"
 	"time"
 
-	goshopify "github.com/bold-commerce/go-shopify/v3"
 	"github.com/dgraph-io/ristretto"
 	"github.com/google/wire"
 	"github.com/tidwall/gjson"
 )
 
-var shopifyApp *goshopify.App
-
 const endpointTemplate = "https://%s.myshopify.com/admin/api/%s/graphql.json"
 
-var Wireset = wire.NewSet(NewShopifyService, NewShopifyApp)
+var Wireset = wire.NewSet(
+	wire.Struct(new(ShopifyService), "*"),
+	NewShopifyApp,
+	NewShopifyApp,
+	ConfigFromEnv,
+)
 
 type ShopifyService struct {
 	configService *configsvc.ConfigService
+	shopifyConfig *Config
 	cacheSvc      *ristretto.Cache
-}
-
-func NewShopifyService(
-	configService *configsvc.ConfigService,
-	cacheSvc *ristretto.Cache,
-) *ShopifyService {
-	return &ShopifyService{
-		configService: configService,
-		cacheSvc:      cacheSvc,
-	}
-}
-
-func NewShopifyApp(configService *configsvc.ConfigService) *goshopify.App {
-	if shopifyApp == nil {
-		shopifyApp = &goshopify.App{
-			ApiKey:      configService.ClientId,
-			ApiSecret:   configService.ClientSecret,
-			RedirectUrl: configService.ServiceUrl + "/auth/shopify/login-callback",
-			Scope:       configService.Scope,
-		}
-	}
-	return shopifyApp
 }
 
 type ShopifyClient struct {
@@ -67,7 +48,7 @@ func (s *ShopifyService) GetShopifyClient(shop, accessToken string) *ShopifyClie
 	client := ShopifyClient{
 		ShopifyDomain: shop,
 		AccessToken:   accessToken,
-		ApiVersion:    s.configService.ApiVersion,
+		ApiVersion:    s.shopifyConfig.ApiVersion,
 		configSvc:     s.configService,
 	}
 	s.cacheSvc.SetWithTTL(cacheKey, client, 0, 1*time.Hour)

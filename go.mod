@@ -9,6 +9,7 @@ require (
 	github.com/ThreeDotsLabs/watermill-firestore v0.2.4
 	github.com/bold-commerce/go-shopify/v3 v3.14.0
 	github.com/cenkalti/backoff/v3 v3.2.2
+	github.com/dgraph-io/dgo/v2 v2.2.0
 	github.com/dgraph-io/ristretto v0.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/garsue/watermillzap v1.2.0
