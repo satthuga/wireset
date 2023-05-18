@@ -32,7 +32,7 @@ var DefaultWireset = wire.NewSet(
 )
 
 func (s *Server) Start(ctx context.Context) chan error {
-	if s.ConfigSvc.IsProduction() {
+	if s.ConfigSvc.DataDogAgentAddress != "" {
 		s.TracerSvc.Start()
 	}
 
