@@ -3,10 +3,8 @@ package command
 import (
 	"context"
 	"fmt"
-	"github.com/aiocean/wireset/model"
-	"github.com/aiocean/wireset/pubsub"
-
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
+	"github.com/aiocean/wireset/model"
 )
 
 type ExampleHandler struct {
@@ -14,12 +12,8 @@ type ExampleHandler struct {
 	commandBus *cqrs.CommandBus
 }
 
-func NewExampleHandler(
-	registry *pubsub.HandlerRegistry,
-) *ExampleHandler {
-	handler := &ExampleHandler{}
-	registry.AddCommandHandler(handler)
-	return handler
+func NewExampleHandler() *ExampleHandler {
+	return &ExampleHandler{}
 }
 
 func (h *ExampleHandler) HandlerName() string {
@@ -35,8 +29,7 @@ func (h *ExampleHandler) RegisterBus(commandBus *cqrs.CommandBus, eventBus *cqrs
 	h.commandBus = commandBus
 }
 
-func (h *ExampleHandler) Handle(ctx context.Context, cmdItf interface{}) error {
-	cmd := cmdItf.(*model.ExampleCmd)
+func (h *ExampleHandler) Handle(ctx context.Context, cmd interface{}) error {
 	fmt.Println("ExampleCmd", cmd)
 	return nil
 }

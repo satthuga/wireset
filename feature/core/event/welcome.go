@@ -2,35 +2,24 @@ package event
 
 import (
 	"context"
+	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/aiocean/wireset/model"
 	"github.com/aiocean/wireset/pubsub"
-
-	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"go.uber.org/zap"
 )
 
 type WelcomeHandler struct {
-	logger     *zap.Logger
-	eventBus   *cqrs.EventBus
-	commandBus *cqrs.CommandBus
+	Logger     *zap.Logger
+	EventBus   *cqrs.EventBus
+	CommandBus *cqrs.CommandBus
+	Registry   *pubsub.HandlerRegistry
 }
 
-// this handler used to init the wallet when user registered
-
-func NewWelcomeHandler(
-	logger *zap.Logger,
-	registry *pubsub.HandlerRegistry,
-) *WelcomeHandler {
-
-	handler := &WelcomeHandler{
-		logger: logger,
+func NewWelcomeHandler(logger *zap.Logger) *WelcomeHandler {
+	return &WelcomeHandler{
+		Logger: logger,
 	}
-
-	registry.AddEventHandler(handler)
-
-	return handler
 }
-
 func (h *WelcomeHandler) HandlerName() string {
 	return "send-welcome-email"
 }
@@ -40,8 +29,8 @@ func (h *WelcomeHandler) NewEvent() interface{} {
 }
 
 func (h *WelcomeHandler) RegisterBus(commandBus *cqrs.CommandBus, eventBus *cqrs.EventBus) {
-	h.eventBus = eventBus
-	h.commandBus = commandBus
+	h.EventBus = eventBus
+	h.CommandBus = commandBus
 }
 
 func (h *WelcomeHandler) Handle(ctx context.Context, event interface{}) error {

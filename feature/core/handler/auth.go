@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"firebase.google.com/go/auth"
+	"github.com/aiocean/wireset/cachesvc"
 	"github.com/aiocean/wireset/configsvc"
 	model2 "github.com/aiocean/wireset/model"
 	"github.com/aiocean/wireset/pubsub"
 	repository2 "github.com/aiocean/wireset/repository"
 	"github.com/aiocean/wireset/shopifysvc"
-	"github.com/dgraph-io/ristretto"
 	"net/http"
 	"strings"
 	"time"
@@ -24,46 +24,21 @@ type AuthHandler struct {
 	ShopRepo       *repository2.ShopRepository
 	ShopifyService *shopifysvc.ShopifyService
 	ConfigSvc      *configsvc.ConfigService
-	shopifyApp     *goshopify.App
-	tokenRepo      *repository2.TokenRepository
-	pubsubSvc      *pubsub.Pubsub
-	logSvc         *zap.Logger
-	cacheSvc       *ristretto.Cache
-	fireAuth       *auth.Client
+	ShopifyConfig  *shopifysvc.Config
+	ShopifyApp     *goshopify.App
+	TokenRepo      *repository2.TokenRepository
+	PubsubSvc      *pubsub.Pubsub
+	LogSvc         *zap.Logger
+	CacheSvc       *cachesvc.CacheService
+	FireAuth       *auth.Client
 }
 
-func NewAuthHandler(
-	shopRepo *repository2.ShopRepository,
-	shopifySvc *shopifysvc.ShopifyService,
-	configSvc *configsvc.ConfigService,
-	shopifyApp *goshopify.App,
-	tokenRepo *repository2.TokenRepository,
-	pubsubSvc *pubsub.Pubsub,
-	logSvc *zap.Logger,
-	cacheSvc *ristretto.Cache,
-	fiberApp *fiber.App,
-	fireAuth *auth.Client,
-) *AuthHandler {
-
-	handler := &AuthHandler{
-		ShopRepo:       shopRepo,
-		ShopifyService: shopifySvc,
-		ConfigSvc:      configSvc,
-		shopifyApp:     shopifyApp,
-		tokenRepo:      tokenRepo,
-		pubsubSvc:      pubsubSvc,
-		logSvc:         logSvc,
-		cacheSvc:       cacheSvc,
-		fireAuth:       fireAuth,
-	}
-
+func (s *AuthHandler) Register(fiberApp *fiber.App) {
 	authGroup := fiberApp.Group("/auth")
 	{
-		authGroup.Get("shopify/login-callback", handler.loginCallback)
-		authGroup.Get("shopify/checkin", handler.checkin)
+		authGroup.Get("shopify/login-callback", s.loginCallback)
+		authGroup.Get("shopify/checkin", s.checkin)
 	}
-
-	return handler
 }
 
 func (s *AuthHandler) checkin(ctx *fiber.Ctx) error {
@@ -79,31 +54,31 @@ func (s *AuthHandler) checkin(ctx *fiber.Ctx) error {
 
 		return ctx.Status(http.StatusUnauthorized).JSON(model2.AuthResponse{
 			Message:           "Unauthorized",
-			AuthenticationUrl: s.shopifyApp.AuthorizeUrl(shop, s.ConfigSvc.LoginNonce),
+			AuthenticationUrl: s.ShopifyApp.AuthorizeUrl(shop, s.ShopifyConfig.LoginNonce),
 		})
 	}
 
-	if authResponse, ok := s.cacheSvc.Get(authentication); ok {
-		s.logSvc.Info("checkin cache hit")
+	if authResponse, ok := s.CacheSvc.Get(authentication); ok {
+		s.LogSvc.Info("checkin cache hit")
 		return ctx.Status(http.StatusOK).JSON(authResponse)
 	}
 
 	var claims model2.CustomJwtClaims
 	token, err := jwt.ParseWithClaims(authentication, &claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(s.ConfigSvc.ClientSecret), nil
+		return []byte(s.ShopifyConfig.ClientSecret), nil
 	})
 	if err != nil {
-		s.logSvc.Error("error while parsing jwt token", zap.Error(err))
+		s.LogSvc.Error("error while parsing jwt token", zap.Error(err))
 		return ctx.Status(http.StatusUnauthorized).JSON(model2.AuthResponse{
 			Message: "Unauthorized",
 		})
 	}
 
 	host := strings.Split(claims.Dest, "/")[2]
-	authUrl := s.shopifyApp.AuthorizeUrl(host, s.ConfigSvc.LoginNonce)
+	authUrl := s.ShopifyApp.AuthorizeUrl(host, s.ShopifyConfig.LoginNonce)
 
 	if !token.Valid {
-		s.logSvc.Error("invalid jwt token")
+		s.LogSvc.Error("invalid jwt token")
 		return ctx.Status(http.StatusOK).JSON(model2.AuthResponse{
 			Message:           "Unauthorized",
 			AuthenticationUrl: authUrl,
@@ -112,40 +87,41 @@ func (s *AuthHandler) checkin(ctx *fiber.Ctx) error {
 
 	shop, err := s.ShopRepo.GetByDomain(ctx.UserContext(), host)
 	if err != nil {
-		s.logSvc.Error("error while getting shop by domain", zap.Error(err))
+		s.LogSvc.Error("error while getting shop by domain", zap.Error(err))
 		return ctx.Status(http.StatusUnauthorized).JSON(model2.AuthResponse{
 			Message:           "Shop is not found in database",
 			AuthenticationUrl: authUrl,
 		})
 	}
 
-	if _, err := s.tokenRepo.GetToken(ctx.UserContext(), shop.ID); err != nil {
-		s.logSvc.Error("error while getting token", zap.Error(err))
+	if _, err := s.TokenRepo.GetToken(ctx.UserContext(), shop.ID); err != nil {
+		s.LogSvc.Error("error while getting token", zap.Error(err))
 		return ctx.Status(http.StatusUnauthorized).JSON(model2.AuthResponse{
 			Message:           "Token is not found in database",
 			AuthenticationUrl: authUrl,
 		})
 	}
 
-	accessToken, err := s.tokenRepo.GetToken(ctx.UserContext(), shop.ID)
+	accessToken, err := s.TokenRepo.GetToken(ctx.UserContext(), shop.ID)
 	if err != nil {
-		s.logSvc.Error("error while getting token", zap.Error(err))
+		s.LogSvc.Error("error while getting token", zap.Error(err))
 		return ctx.Status(http.StatusUnauthorized).JSON(model2.AuthResponse{
 			Message:           "Token is not found in database",
 			AuthenticationUrl: authUrl,
 		})
 	}
-	if err := s.pubsubSvc.Send(ctx.UserContext(), &model2.ShopCheckedInEvt{
+
+	if err := s.PubsubSvc.Send(ctx.UserContext(), &model2.ShopCheckedInEvt{
 		MyshopifyDomain: shop.MyshopifyDomain,
 		AccessToken:     accessToken.AccessToken,
 	}); err != nil {
-		s.logSvc.Error("error while publishing event", zap.Error(err))
+		s.LogSvc.Error("error while publishing event", zap.Error(err))
 	}
 
 	// This user is authorized, create custom firebase token
-	firebaseToken, err := s.fireAuth.CustomToken(ctx.UserContext(), shop.ID)
+	firebaseToken, err := s.FireAuth.CustomToken(ctx.UserContext(), shop.ID)
 	if err != nil {
-		s.logSvc.Error("error while creating custom token", zap.Error(err))
+		s.LogSvc.Error("error while creating custom token", zap.Error(err))
 		return ctx.Status(http.StatusInternalServerError).JSON(model2.AuthResponse{
 			Message: "Internal server error",
 		})
@@ -156,7 +132,7 @@ func (s *AuthHandler) checkin(ctx *fiber.Ctx) error {
 		FirebaseCustomToken: firebaseToken,
 	}
 
-	s.cacheSvc.SetWithTTL(authentication, authResponse, 0, time.Minute*5)
+	s.CacheSvc.SetWithTTL(authentication, authResponse, time.Minute*5)
 	return ctx.Status(http.StatusOK).JSON(authResponse)
 }
 
@@ -190,20 +166,20 @@ func (s *AuthHandler) loginCallback(ctx *fiber.Ctx) error {
 			return fiber.NewError(http.StatusBadRequest, err.Error())
 		}
 
-		s.pubsubSvc.Publish(ctx.UserContext(), &model2.ShopInstalledEvt{
+		s.PubsubSvc.Publish(ctx.UserContext(), &model2.ShopInstalledEvt{
 			MyshopifyDomain: shopName,
 			AccessToken:     accessToken,
 		})
 	}
 
-	if err := s.tokenRepo.SaveAccessToken(ctx.UserContext(), &model2.ShopifyToken{
+	if err := s.TokenRepo.SaveAccessToken(ctx.UserContext(), &model2.ShopifyToken{
 		ShopID:      shopDetails.ID,
 		AccessToken: accessToken,
 	}); err != nil {
 		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}
 
-	redirectUrl := "https://" + shopName + "/admin/apps/" + s.ConfigSvc.ClientId
+	redirectUrl := "https://" + shopName + "/admin/apps/" + s.ShopifyConfig.ClientId
 	return ctx.Redirect(redirectUrl)
 }
 
@@ -215,18 +191,18 @@ func (s *AuthHandler) verifyLoginRequest(context *fiber.Ctx) error {
 	timestamp := context.Query("timestamp")
 	host := context.Query("host")
 
-	if state != s.ConfigSvc.LoginNonce {
+	if state != s.ShopifyConfig.LoginNonce {
 		return errors.New("nonce is not matched")
 	}
 
 	message := "code=" + code + "&host=" + host + "&shop=" + shopDomain + "&state=" + state + "&timestamp=" + timestamp
-	s.shopifyApp.VerifyMessage(message, messageMAC)
+	s.ShopifyApp.VerifyMessage(message, messageMAC)
 	return nil
 }
 
 func (s *AuthHandler) getAccessToken(context *fiber.Ctx) (string, error) {
 	shopDomain := context.Query("shop")
-	accessToken, err := s.shopifyApp.GetAccessToken(shopDomain, context.Query("code"))
+	accessToken, err := s.ShopifyApp.GetAccessToken(shopDomain, context.Query("code"))
 	if err != nil {
 		return "", err
 	}
@@ -237,7 +213,7 @@ func (s *AuthHandler) getAccessToken(context *fiber.Ctx) (string, error) {
 // CreateFirebaseToken
 func (s *AuthHandler) CreateFirebaseToken(ctx context.Context, shopID string) (string, error) {
 
-	token, err := s.fireAuth.CustomToken(ctx, shopID)
+	token, err := s.FireAuth.CustomToken(ctx, shopID)
 	if err != nil {
 		return "", err
 	}

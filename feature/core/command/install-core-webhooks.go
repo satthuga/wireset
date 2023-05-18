@@ -3,30 +3,21 @@ package command
 import (
 	"context"
 	"github.com/aiocean/wireset/model"
-	"github.com/aiocean/wireset/pubsub"
 	"github.com/aiocean/wireset/shopifysvc"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 )
 
 type InstallWebhookHandler struct {
-	eventBus   *cqrs.EventBus
-	commandBus *cqrs.CommandBus
-	shopifySvc *shopifysvc.ShopifyService
+	EventBus   *cqrs.EventBus
+	CommandBus *cqrs.CommandBus
+	ShopifySvc *shopifysvc.ShopifyService
 }
 
-func NewInstallWebhookHandler(
-	shopifySvc *shopifysvc.ShopifyService,
-	registry *pubsub.HandlerRegistry,
-
-) *InstallWebhookHandler {
-	handler := &InstallWebhookHandler{
-		shopifySvc: shopifySvc,
+func NewInstallWebhookHandler(shopifySvc *shopifysvc.ShopifyService) *InstallWebhookHandler {
+	return &InstallWebhookHandler{
+		ShopifySvc: shopifySvc,
 	}
-
-	registry.AddCommandHandler(handler)
-
-	return handler
 }
 
 func (h *InstallWebhookHandler) HandlerName() string {
@@ -38,14 +29,14 @@ func (h *InstallWebhookHandler) NewCommand() interface{} {
 }
 
 func (h *InstallWebhookHandler) RegisterBus(commandBus *cqrs.CommandBus, eventBus *cqrs.EventBus) {
-	h.eventBus = eventBus
-	h.commandBus = commandBus
+	h.EventBus = eventBus
+	h.CommandBus = commandBus
 }
 
 func (h *InstallWebhookHandler) Handle(ctx context.Context, cmdItf interface{}) error {
 	cmd := cmdItf.(*model.InstallWebhookCmd)
 
-	shopClient := h.shopifySvc.GetShopifyClient(cmd.MyshopifyDomain, cmd.AccessToken)
+	shopClient := h.ShopifySvc.GetShopifyClient(cmd.MyshopifyDomain, cmd.AccessToken)
 
 	if err := shopClient.InstallAppUninstalledWebhook(); err != nil {
 		return err

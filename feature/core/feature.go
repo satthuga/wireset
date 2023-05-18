@@ -2,50 +2,57 @@ package core
 
 import (
 	"github.com/aiocean/wireset/feature/core/command"
-	event2 "github.com/aiocean/wireset/feature/core/event"
-	handler2 "github.com/aiocean/wireset/feature/core/handler"
+	"github.com/aiocean/wireset/feature/core/event"
+	"github.com/aiocean/wireset/feature/core/handler"
+	"github.com/aiocean/wireset/pubsub"
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/wire"
 )
 
 var DefaultWireset = wire.NewSet(
-	NewFeatureCore,
+	wire.Struct(new(FeatureCore), "*"),
 
 	command.NewInstallWebhookHandler,
+	event.NewCheckinHandler,
+	event.NewShopInstalledHandler,
+	event.NewWelcomeHandler,
 
-	event2.NewCheckinHandler,
-	event2.NewShopInstalledHandler,
-	event2.NewWelcomeHandler,
-
-	handler2.NewAuthHandler,
-	handler2.NewWebhookHandler,
-	handler2.NewWebsocketHandler,
-	handler2.NewGdprHandler,
+	wire.Struct(new(handler.AuthHandler), "*"),
+	wire.Struct(new(handler.WebhookHandler), "*"),
+	wire.Struct(new(handler.WebsocketHandler), "*"),
+	wire.Struct(new(handler.GdprHandler), "*"),
+	wire.Struct(new(handler.PrometheusHandler), "*"),
 )
 
 type FeatureCore struct {
+	InstallWebhookCmdHandler *command.InstallWebhookHandler
+
+	CheckinEvtHandler       *event.CheckinHandler
+	ShopInstalledEvtHandler *event.ShopInstalledHandler
+	WelcomeEvtHandler       *event.WelcomeHandler
+
+	AuthHandler       *handler.AuthHandler
+	WebhookHandler    *handler.WebhookHandler
+	WebsocketHandler  *handler.WebsocketHandler
+	GdprHandler       *handler.GdprHandler
+	PrometheusHandler *handler.PrometheusHandler
+
+	HandlerRegistry *pubsub.HandlerRegistry
+	FiberApp        *fiber.App
 }
 
-func NewFeatureCore(
+func (f *FeatureCore) Init() error {
+	f.HandlerRegistry.AddCommandHandler(f.InstallWebhookCmdHandler)
 
-	_ *command.InstallWebhookHandler,
+	f.HandlerRegistry.AddEventHandler(f.CheckinEvtHandler)
+	f.HandlerRegistry.AddEventHandler(f.ShopInstalledEvtHandler)
+	f.HandlerRegistry.AddEventHandler(f.WelcomeEvtHandler)
 
-	_ *event2.CheckinHandler,
-	_ *event2.ShopInstalledHandler,
-	_ *event2.WelcomeHandler,
+	f.AuthHandler.Register(f.FiberApp)
+	f.WebhookHandler.Register(f.FiberApp)
+	f.WebsocketHandler.Register(f.FiberApp)
+	f.GdprHandler.Register(f.FiberApp)
+	f.PrometheusHandler.Register(f.FiberApp)
 
-	_ *handler2.AuthHandler,
-	_ *handler2.WebhookHandler,
-	_ *handler2.WebsocketHandler,
-	_ *handler2.GdprHandler,
-
-) *FeatureCore {
-	return &FeatureCore{}
-}
-
-func (f *FeatureCore) GetName() string {
-	return "core"
-}
-
-func (f *FeatureCore) Register() {
-
+	return nil
 }

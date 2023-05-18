@@ -1,6 +1,7 @@
 package shopifysvc
 
 import (
+	"github.com/google/wire"
 	"github.com/pkg/errors"
 	"os"
 )
@@ -13,6 +14,8 @@ type Config struct {
 	ApiVersion   string
 	LoginNonce   string
 }
+
+var EnvWireset = wire.NewSet(ConfigFromEnv)
 
 func ConfigFromEnv() (*Config, error) {
 	config := &Config{}

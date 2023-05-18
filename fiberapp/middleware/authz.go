@@ -4,6 +4,7 @@ import (
 	"github.com/aiocean/wireset/configsvc"
 	model2 "github.com/aiocean/wireset/model"
 	repository2 "github.com/aiocean/wireset/repository"
+	"github.com/aiocean/wireset/shopifysvc"
 	"go.uber.org/zap"
 	"net/http"
 	"strings"
@@ -15,6 +16,7 @@ import (
 
 type AuthzController struct {
 	configService   *configsvc.ConfigService
+	shopifyConfig   *shopifysvc.Config
 	tokenRepository *repository2.TokenRepository
 	shopRepository  *repository2.ShopRepository
 	shopifyApp      *goshopify.App
@@ -48,6 +50,14 @@ func (s *AuthzController) IsAuthRequired(path string) bool {
 		return false
 	}
 
+	if strings.HasPrefix(path, "/metrics") {
+		return false
+	}
+
+	if strings.HasPrefix(path, "/app") {
+		return false
+	}
+
 	return true
 }
 
@@ -66,7 +76,7 @@ func (s *AuthzController) Middleware() fiber.Handler {
 
 		var claims model2.CustomJwtClaims
 		token, err := jwt.ParseWithClaims(authentication, &claims, func(token *jwt.Token) (interface{}, error) {
-			return []byte(s.configService.ClientSecret), nil
+			return []byte(s.shopifyConfig.ClientSecret), nil
 		})
 
 		if err != nil {
@@ -82,7 +92,7 @@ func (s *AuthzController) Middleware() fiber.Handler {
 		adminUrl := claims.Dest
 		host := strings.Split(adminUrl, "/")[2]
 
-		authUrl := s.shopifyApp.AuthorizeUrl(host, s.configService.LoginNonce)
+		authUrl := s.shopifyApp.AuthorizeUrl(host, s.shopifyConfig.LoginNonce)
 
 		shop, err := s.shopRepository.GetByDomain(c.UserContext(), host)
 		if err != nil {

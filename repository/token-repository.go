@@ -22,7 +22,7 @@ func NewTokenRepository(
 	}
 }
 
-var DefaultWireset = wire.NewSet(NewTokenRepository)
+var TokenRepoWireset = wire.NewSet(NewTokenRepository)
 
 func (r *TokenRepository) GetToken(ctx context.Context, shopID string) (*model.ShopifyToken, error) {
 	if shopID == "" {

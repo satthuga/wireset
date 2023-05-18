@@ -7,36 +7,24 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/wire"
 )
 
-var WebhookHandlerWireset = wire.NewSet(NewWebhookHandler)
-
 type WebhookHandler struct {
-	shopRepo *repository.ShopRepository
-	pubsub   *pubsub.Pubsub
+	ShopRepo *repository.ShopRepository
+	Pubsub   *pubsub.Pubsub
+	FiberApp *fiber.App
 }
 
-func NewWebhookHandler(
-	shopRepo *repository.ShopRepository,
-	pubsub *pubsub.Pubsub,
-	fiberApp *fiber.App,
-) *WebhookHandler {
-	h := &WebhookHandler{
-		shopRepo: shopRepo,
-		pubsub:   pubsub,
-	}
-
+// Init
+func (s *WebhookHandler) Register(fiberApp *fiber.App) {
 	shopGroup := fiberApp.Group("/webhook")
 	{
-		shopGroup.Get("/shopify/app-uninstalled", h.Uninstalled)
+		shopGroup.Get("/shopify/app-uninstalled", s.Uninstalled)
 	}
-
-	return h
 }
 
 func (s *WebhookHandler) Uninstalled(c *fiber.Ctx) error {
-	s.pubsub.Send(c.UserContext(), &model.ShopUninstalledEvt{
+	s.Pubsub.Send(c.UserContext(), &model.ShopUninstalledEvt{
 		MyshopifyDomain: c.Query("shop"),
 	})
 

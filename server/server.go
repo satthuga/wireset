@@ -26,7 +26,7 @@ type Server struct {
 	CoreFeature *core.FeatureCore
 }
 
-var Wireset = wire.NewSet(
+var DefaultWireset = wire.NewSet(
 	wire.Struct(new(Server), "*"),
 	core.DefaultWireset,
 )
@@ -36,13 +36,19 @@ func (s *Server) Start(ctx context.Context) chan error {
 		s.TracerSvc.Start()
 	}
 
-	s.CoreFeature.Register()
-	for _, feature := range s.Features {
-		feature.Register()
-		s.LogSvc.Info("feature registered", zap.String("name", feature.GetName()))
+	errChan := make(chan error, 1)
+
+	if err := s.CoreFeature.Init(); err != nil {
+		errChan <- errors.WithMessage(err, "failed to init core feature")
+		return errChan
 	}
 
-	errChan := make(chan error, 1)
+	for _, feature := range s.Features {
+		if err := feature.Init(); err != nil {
+			errChan <- errors.WithMessage(err, "failed to init feature")
+			return errChan
+		}
+	}
 
 	if err := s.EventBus.Register(); err != nil {
 		errChan <- errors.WithMessage(err, "failed to register event bus")

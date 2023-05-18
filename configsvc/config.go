@@ -20,9 +20,9 @@ type DatabaseConfig struct {
 	ConnectionUri string
 }
 
-var Wireset = wire.NewSet(NewConfigService)
+var EnvWireset = wire.NewSet(NewConfigFromEnv)
 
-func NewConfigService() (*ConfigService, error) {
+func NewConfigFromEnv() (*ConfigService, error) {
 	configService := &ConfigService{
 		ServiceName: os.Getenv("SERVICE_NAME"),
 		ServiceUrl:  os.Getenv("SERVICE_URL"),

@@ -2,12 +2,10 @@ package wireset
 
 import (
 	"github.com/aiocean/wireset/cachesvc"
-	"github.com/aiocean/wireset/configsvc"
 	"github.com/aiocean/wireset/fiberapp"
 	"github.com/aiocean/wireset/fireauthsvc"
 	"github.com/aiocean/wireset/logsvc"
 	"github.com/aiocean/wireset/pubsub"
-	"github.com/aiocean/wireset/pubsub/router"
 	"github.com/aiocean/wireset/repository"
 	"github.com/aiocean/wireset/server"
 	"github.com/aiocean/wireset/shopifysvc"
@@ -15,17 +13,24 @@ import (
 	"github.com/google/wire"
 )
 
-var DefaultWireset = wire.NewSet(
-	repository.ShopRepositoryWireset,
-	repository.DefaultWireset,
-	configsvc.Wireset,
-	shopifysvc.Wireset,
+var ShopifyAppWireset = wire.NewSet(
+	repository.ShopRepoWireset,
+	repository.TokenRepoWireset,
+	shopifysvc.DefaultWireset,
 	fiberapp.DefaultWireset,
 	fireauthsvc.DefaultWireset,
-	router.DefaultWireset,
-	server.Wireset,
+	server.DefaultWireset,
 	tracersvc.TracerSvcWireset,
-	logsvc.LogSvcWireset,
-	pubsub.FirebasePubsubWireset,
+	logsvc.DefaultWireset,
+	pubsub.DefaultWireset,
+	cachesvc.DefaultWireset,
+)
+var NormalAppWireset = wire.NewSet(
+	fiberapp.DefaultWireset,
+	fireauthsvc.DefaultWireset,
+	server.DefaultWireset,
+	tracersvc.TracerSvcWireset,
+	logsvc.DefaultWireset,
+	pubsub.DefaultWireset,
 	cachesvc.DefaultWireset,
 )

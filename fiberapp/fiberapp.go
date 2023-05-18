@@ -5,6 +5,8 @@ import (
 	"github.com/aiocean/wireset/fiberapp/middleware"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"go.uber.org/zap"
 	"time"
 
@@ -29,7 +31,7 @@ func NewFiberApp(
 		AppName:               cfg.ServiceName,
 		JSONEncoder:           json.Marshal,
 		JSONDecoder:           json.Unmarshal,
-		DisableStartupMessage: false,
+		DisableStartupMessage: true,
 		IdleTimeout:           10 * time.Second,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
@@ -44,18 +46,23 @@ func NewFiberApp(
 		},
 	})
 
-	logger := logsvc.With(zap.Strings("tags", []string{"FiberApp"}))
+	logger := logsvc.With(zap.Strings("tags", []string{"fiber"}))
 
 	app.Use(cors.New())
 	app.Use(fiberzap.New(fiberzap.Config{
 		Logger: logger,
 	}))
-	app.Use(middleware.AllowEmbed())
 	app.Use(authzMiddleware.Middleware())
 	app.Use(compress.New(compress.Config{
 		Level: compress.LevelBestSpeed,
 	}))
 	app.Use(idempotency.New())
+	app.Use(limiter.New(limiter.Config{
+		Max:               20,
+		Expiration:        30 * time.Second,
+		LimiterMiddleware: limiter.SlidingWindow{},
+	}))
+	app.Use(requestid.New())
 
 	cleanup := func() {
 		logger.Info("Cleaning up")

@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var LogSvcWireset = wire.NewSet(NewLogger)
+var DefaultWireset = wire.NewSet(NewLogger)
 
 func NewLogger() (*zap.Logger, error) {
 	loc := time.FixedZone("UTC+7", 7*60*60)

@@ -5,7 +5,7 @@ import (
 	goshopify "github.com/bold-commerce/go-shopify/v3"
 )
 
-func NewShopifyApp(shopifyConfig *Config, config configsvc.ConfigService) *goshopify.App {
+func NewShopifyApp(shopifyConfig *Config, config *configsvc.ConfigService) *goshopify.App {
 	return &goshopify.App{
 		ApiKey:      shopifyConfig.ClientId,
 		ApiSecret:   shopifyConfig.ClientSecret,

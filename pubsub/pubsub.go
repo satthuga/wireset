@@ -6,15 +6,17 @@ import (
 	watermillFirestore "github.com/ThreeDotsLabs/watermill-firestore/pkg/firestore"
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/aiocean/wireset/pubsub/router"
 	"github.com/garsue/watermillzap"
 	"github.com/google/wire"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-var FirebasePubsubWireset = wire.NewSet(
+var DefaultWireset = wire.NewSet(
 	NewFacade,
 	NewHandlerRegistry,
+	router.DefaultWireset,
 )
 
 // Send publishes a message to the given topic.

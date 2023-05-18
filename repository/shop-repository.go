@@ -27,7 +27,7 @@ func NewShopRepository(
 
 var ErrShopNotFound = errors.New("shop not found")
 
-var ShopRepositoryWireset = wire.NewSet(
+var ShopRepoWireset = wire.NewSet(
 	NewShopRepository,
 	firestoresvc.DefaultWireset,
 )

@@ -4,29 +4,28 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/aiocean/wireset/cachesvc"
 	"github.com/aiocean/wireset/configsvc"
 	"io"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/dgraph-io/ristretto"
 	"github.com/google/wire"
 	"github.com/tidwall/gjson"
 )
 
 const endpointTemplate = "https://%s.myshopify.com/admin/api/%s/graphql.json"
 
-var Wireset = wire.NewSet(
+var DefaultWireset = wire.NewSet(
 	wire.Struct(new(ShopifyService), "*"),
 	NewShopifyApp,
-	ConfigFromEnv,
 )
 
 type ShopifyService struct {
-	configService *configsvc.ConfigService
-	shopifyConfig *Config
-	cacheSvc      *ristretto.Cache
+	ConfigService *configsvc.ConfigService
+	ShopifyConfig *Config
+	CacheSvc      *cachesvc.CacheService
 }
 
 type ShopifyClient struct {
@@ -39,7 +38,7 @@ type ShopifyClient struct {
 func (s *ShopifyService) GetShopifyClient(shop, accessToken string) *ShopifyClient {
 	shop = strings.Replace(shop, ".myshopify.com", "", -1)
 	cacheKey := fmt.Sprintf("shopify_client_%s", shop)
-	if client, ok := s.cacheSvc.Get(cacheKey); ok {
+	if client, ok := s.CacheSvc.Get(cacheKey); ok {
 		c := client.(ShopifyClient)
 		return &c
 	}
@@ -47,10 +46,10 @@ func (s *ShopifyService) GetShopifyClient(shop, accessToken string) *ShopifyClie
 	client := ShopifyClient{
 		ShopifyDomain: shop,
 		AccessToken:   accessToken,
-		ApiVersion:    s.shopifyConfig.ApiVersion,
-		configSvc:     s.configService,
+		ApiVersion:    s.ShopifyConfig.ApiVersion,
+		configSvc:     s.ConfigService,
 	}
-	s.cacheSvc.SetWithTTL(cacheKey, client, 0, 1*time.Hour)
+	s.CacheSvc.SetWithTTL(cacheKey, client, 1*time.Hour)
 
 	return &client
 }

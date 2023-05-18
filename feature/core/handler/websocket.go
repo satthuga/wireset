@@ -3,18 +3,11 @@ package handler
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
-	"github.com/google/wire"
 	"log"
 )
 
 type WebsocketHandler struct {
 }
-
-func NewWebsocketHandler() *WebsocketHandler {
-	return &WebsocketHandler{}
-}
-
-var WebsocketHandlerWireset = wire.NewSet(NewWebsocketHandler)
 
 func (s *WebsocketHandler) Register(fiberApp *fiber.App) {
 	fiberApp.Use("/ws", func(c *fiber.Ctx) error {
