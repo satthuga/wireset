@@ -3,6 +3,7 @@ package model
 type ShopInstalledEvt struct {
 	MyshopifyDomain string
 	AccessToken     string
+	ShopID          string
 }
 
 type ShopUninstalledEvt struct {
@@ -12,6 +13,7 @@ type ShopUninstalledEvt struct {
 type ShopCheckedInEvt struct {
 	MyshopifyDomain string
 	AccessToken     string
+	ShopID          string
 }
 
 type ServerStartedEvt struct {

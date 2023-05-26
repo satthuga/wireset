@@ -2,10 +2,10 @@ package shopifysvc
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"github.com/aiocean/wireset/cachesvc"
 	"github.com/aiocean/wireset/configsvc"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"strings"
@@ -215,4 +215,23 @@ var ErrProductNotFound = errors.New("product not found")
 // GetProductByHandle returns a product by handle
 func (c *ShopifyClient) GetProductByHandle(handle string) (*Product, error) {
 	panic("implement me")
+}
+
+// GetCurrentTheme returns the current theme
+func (c *ShopifyClient) GetCurrentTheme() (string, error) {
+	requestBody := `
+query {
+  theme {
+    id
+    name
+    role
+  }
+}`
+	response, err := c.doRequest(requestBody)
+	if err != nil {
+		return "", errors.WithMessage(err, "failed to get current theme")
+	}
+
+	themeData := response.Get("theme")
+	return themeData.Get("id").String(), nil
 }

@@ -13,8 +13,8 @@ var DefaultWireset = wire.NewSet(
 	wire.Struct(new(FeatureCore), "*"),
 
 	command.NewInstallWebhookHandler,
-	event.NewCheckinHandler,
-	event.NewShopInstalledHandler,
+	command.NewSetShopStateHandler,
+	event.NewCreateUserHandler,
 	event.NewWelcomeHandler,
 
 	wire.Struct(new(handler.AuthHandler), "*"),
@@ -26,9 +26,9 @@ var DefaultWireset = wire.NewSet(
 
 type FeatureCore struct {
 	InstallWebhookCmdHandler *command.InstallWebhookHandler
+	SetShopStateCmdHandler   *command.SetShopStateHandler
 
-	CheckinEvtHandler       *event.CheckinHandler
-	ShopInstalledEvtHandler *event.ShopInstalledHandler
+	ShopInstalledEvtHandler *event.CreateUserHandler
 	WelcomeEvtHandler       *event.WelcomeHandler
 
 	AuthHandler       *handler.AuthHandler
@@ -43,8 +43,8 @@ type FeatureCore struct {
 
 func (f *FeatureCore) Init() error {
 	f.HandlerRegistry.AddCommandHandler(f.InstallWebhookCmdHandler)
+	f.HandlerRegistry.AddCommandHandler(f.SetShopStateCmdHandler)
 
-	f.HandlerRegistry.AddEventHandler(f.CheckinEvtHandler)
 	f.HandlerRegistry.AddEventHandler(f.ShopInstalledEvtHandler)
 	f.HandlerRegistry.AddEventHandler(f.WelcomeEvtHandler)
 

@@ -2,10 +2,8 @@ package event
 
 import (
 	"context"
-	"github.com/aiocean/wireset/model"
-	"github.com/aiocean/wireset/pubsub"
-
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
+	"github.com/aiocean/wireset/model"
 	"go.uber.org/zap"
 )
 
@@ -19,13 +17,10 @@ type ExampleHandler struct {
 
 func NewExampleHandler(
 	logger *zap.Logger,
-	registry *pubsub.HandlerRegistry,
 ) *ExampleHandler {
 	handler := &ExampleHandler{
 		logger: logger,
 	}
-
-	registry.AddEventHandler(handler)
 
 	return handler
 }

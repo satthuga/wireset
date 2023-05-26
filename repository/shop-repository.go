@@ -33,7 +33,7 @@ var ShopRepoWireset = wire.NewSet(
 )
 
 func (r *ShopRepository) IsShopExists(ctx context.Context, shopID string) (bool, error) {
-	snapshot, err := r.firestoreClient.Collection("shops").Doc(normalizeShopID(shopID)).Get(ctx)
+	snapshot, err := r.firestoreClient.Collection("shops").Doc(NormalizeShopID(shopID)).Get(ctx)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return false, nil
@@ -46,7 +46,7 @@ func (r *ShopRepository) IsShopExists(ctx context.Context, shopID string) (bool,
 }
 
 func (r *ShopRepository) Create(ctx context.Context, shop *shopifysvc.Shop) error {
-	_, err := r.firestoreClient.Collection("shops").Doc(normalizeShopID(shop.ID)).Set(ctx, shop)
+	_, err := r.firestoreClient.Collection("shops").Doc(NormalizeShopID(shop.ID)).Set(ctx, shop)
 	if err != nil {
 		return err
 	}
@@ -57,17 +57,18 @@ func (r *ShopRepository) Create(ctx context.Context, shop *shopifysvc.Shop) erro
 func (r *ShopRepository) Update(ctx context.Context, shop *shopifysvc.Shop) error {
 
 	updates := []firestore.Update{
-		{Path: "ID", Value: shop.ID},
-		{Path: "Domain", Value: shop.Domain},
-		{Path: "MyshopifyDomain", Value: shop.MyshopifyDomain},
-		{Path: "Name", Value: shop.Name},
-		{Path: "Email", Value: shop.Email},
-		{Path: "CountryCode", Value: shop.CountryCode},
-		{Path: "TimezoneAbbreviation", Value: shop.TimezoneAbbreviation},
-		{Path: "IanaTimezone", Value: shop.IanaTimezone},
-		{Path: "CurrencyCode", Value: shop.CurrencyCode},
+		{Path: "id", Value: shop.ID},
+		{Path: "domain", Value: shop.Domain},
+		{Path: "myshopifyDomain", Value: shop.MyshopifyDomain},
+		{Path: "name", Value: shop.Name},
+		{Path: "email", Value: shop.Email},
+		{Path: "countryCode", Value: shop.CountryCode},
+		{Path: "timezoneAbbreviation", Value: shop.TimezoneAbbreviation},
+		{Path: "ianaTimezone", Value: shop.IanaTimezone},
+		{Path: "currencyCode", Value: shop.CurrencyCode},
 	}
-	_, err := r.firestoreClient.Collection("shops").Doc(normalizeShopID(shop.ID)).Update(ctx, updates)
+
+	_, err := r.firestoreClient.Collection("shops").Doc(NormalizeShopID(shop.ID)).Update(ctx, updates)
 	if err != nil {
 		return err
 	}
@@ -76,7 +77,7 @@ func (r *ShopRepository) Update(ctx context.Context, shop *shopifysvc.Shop) erro
 }
 
 func (r *ShopRepository) Get(ctx context.Context, shopID string) (*shopifysvc.Shop, error) {
-	snapshot, err := r.firestoreClient.Collection("shops").Doc(normalizeShopID(shopID)).Get(ctx)
+	snapshot, err := r.firestoreClient.Collection("shops").Doc(NormalizeShopID(shopID)).Get(ctx)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return nil, ErrShopNotFound
@@ -94,7 +95,7 @@ func (r *ShopRepository) Get(ctx context.Context, shopID string) (*shopifysvc.Sh
 
 func (r *ShopRepository) GetByDomain(ctx context.Context, domain string) (*shopifysvc.Shop, error) {
 
-	cur := r.firestoreClient.Collection("shops").Where("MyshopifyDomain", "==", domain).Documents(ctx)
+	cur := r.firestoreClient.Collection("shops").Where("myshopifyDomain", "==", domain).Documents(ctx)
 	defer cur.Stop()
 
 	doc, err := cur.Next()
@@ -112,9 +113,9 @@ func (r *ShopRepository) GetByDomain(ctx context.Context, domain string) (*shopi
 
 func (r *ShopRepository) UpdateLastLogin(ctx context.Context, shopID string, at *time.Time) error {
 	updates := []firestore.Update{
-		{Path: "LastLoginTime", Value: at},
+		{Path: "lastLoginTime", Value: at},
 	}
-	_, err := r.firestoreClient.Collection("shops").Doc(normalizeShopID(shopID)).Update(ctx, updates)
+	_, err := r.firestoreClient.Collection("shops").Doc(NormalizeShopID(shopID)).Update(ctx, updates)
 	if err != nil {
 		return err
 	}

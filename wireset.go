@@ -16,6 +16,7 @@ import (
 var ShopifyAppWireset = wire.NewSet(
 	repository.ShopRepoWireset,
 	repository.TokenRepoWireset,
+	repository.StateRepoWireset,
 	shopifysvc.DefaultWireset,
 	fiberapp.DefaultWireset,
 	fireauthsvc.DefaultWireset,

@@ -11,3 +11,8 @@ type CreateInsuranceProductCmd struct {
 }
 
 type ExampleCmd struct{}
+
+type SetShopStateCmd struct {
+	ShopID string
+	State  map[string]interface{}
+}

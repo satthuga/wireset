@@ -29,7 +29,7 @@ func (r *TokenRepository) GetToken(ctx context.Context, shopID string) (*model.S
 		return nil, errors.New("shop id is empty")
 	}
 
-	snapshot, err := r.firestoreClient.Collection("shops").Doc(normalizeShopID(shopID)).Get(ctx)
+	snapshot, err := r.firestoreClient.Collection("shops").Doc(NormalizeShopID(shopID)).Get(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (r *TokenRepository) GetToken(ctx context.Context, shopID string) (*model.S
 		return nil, errors.New("shop not found")
 	}
 
-	tokenString, err := snapshot.DataAtPath(firestore.FieldPath{"ShopifyToken"})
+	tokenString, err := snapshot.DataAtPath(firestore.FieldPath{"shopifyToken"})
 	if err != nil {
 		return nil, err
 	}
@@ -57,9 +57,13 @@ func (r *TokenRepository) SaveAccessToken(ctx context.Context, token *model.Shop
 	}
 
 	updates := []firestore.Update{
-		{Path: "ShopifyToken", Value: token.AccessToken},
+		{
+			Path:  "shopifyToken",
+			Value: token.AccessToken,
+		},
 	}
-	_, err := r.firestoreClient.Collection("shops").Doc(normalizeShopID(token.ShopID)).Update(ctx, updates)
+
+	_, err := r.firestoreClient.Collection("shops").Doc(NormalizeShopID(token.ShopID)).Update(ctx, updates)
 	if err != nil {
 		return err
 	}

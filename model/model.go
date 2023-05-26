@@ -7,6 +7,6 @@ type AuthResponse struct {
 }
 
 type ShopifyToken struct {
-	ShopID      string
-	AccessToken string
+	ShopID      string `json:"shopId" firestore:"shopId"`
+	AccessToken string `json:"accessToken" firestore:"accessToken"`
 }
