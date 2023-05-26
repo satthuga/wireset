@@ -23,7 +23,7 @@ func (s *AuthHandler) checkin(ctx *fiber.Ctx) error {
 			return fiber.NewError(http.StatusBadRequest, "shop is required")
 		}
 
-		return ctx.Status(http.StatusUnauthorized).JSON(model.AuthResponse{
+		return ctx.Status(http.StatusOK).JSON(model.AuthResponse{
 			Message:           "Unauthorized",
 			AuthenticationUrl: s.ShopifyApp.AuthorizeUrl(shop, s.ShopifyConfig.LoginNonce),
 		})
@@ -59,7 +59,7 @@ func (s *AuthHandler) checkin(ctx *fiber.Ctx) error {
 	shop, err := s.ShopRepo.GetByDomain(ctx.UserContext(), host)
 	if err != nil {
 		s.LogSvc.Error("error while getting shop by domain", zap.Error(err))
-		return ctx.Status(http.StatusUnauthorized).JSON(model.AuthResponse{
+		return ctx.Status(http.StatusOK).JSON(model.AuthResponse{
 			Message:           "Shop is not found in database",
 			AuthenticationUrl: authUrl,
 		})
@@ -67,7 +67,7 @@ func (s *AuthHandler) checkin(ctx *fiber.Ctx) error {
 
 	if _, err := s.TokenRepo.GetToken(ctx.UserContext(), shop.ID); err != nil {
 		s.LogSvc.Error("error while getting token", zap.Error(err))
-		return ctx.Status(http.StatusUnauthorized).JSON(model.AuthResponse{
+		return ctx.Status(http.StatusOK).JSON(model.AuthResponse{
 			Message:           "Token is not found in database",
 			AuthenticationUrl: authUrl,
 		})
@@ -76,7 +76,7 @@ func (s *AuthHandler) checkin(ctx *fiber.Ctx) error {
 	accessToken, err := s.TokenRepo.GetToken(ctx.UserContext(), shop.ID)
 	if err != nil {
 		s.LogSvc.Error("error while getting token", zap.Error(err))
-		return ctx.Status(http.StatusUnauthorized).JSON(model.AuthResponse{
+		return ctx.Status(http.StatusOK).JSON(model.AuthResponse{
 			Message:           "Token is not found in database",
 			AuthenticationUrl: authUrl,
 		})
