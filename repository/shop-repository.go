@@ -33,7 +33,11 @@ var ShopRepoWireset = wire.NewSet(
 )
 
 func (r *ShopRepository) IsShopExists(ctx context.Context, shopID string) (bool, error) {
-	snapshot, err := r.firestoreClient.Collection("shops").Doc(NormalizeShopID(shopID)).Get(ctx)
+	normalizedID, err := NormalizeShopID(shopID)
+	if err != nil {
+		return false, err
+	}
+	snapshot, err := r.firestoreClient.Collection("shops").Doc(normalizedID).Get(ctx)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return false, nil
@@ -46,8 +50,12 @@ func (r *ShopRepository) IsShopExists(ctx context.Context, shopID string) (bool,
 }
 
 func (r *ShopRepository) Create(ctx context.Context, shop *shopifysvc.Shop) error {
-	_, err := r.firestoreClient.Collection("shops").Doc(NormalizeShopID(shop.ID)).Set(ctx, shop)
+	normalizedID, err := NormalizeShopID(shop.ID)
 	if err != nil {
+		return err
+	}
+
+	if _, err := r.firestoreClient.Collection("shops").Doc(normalizedID).Set(ctx, shop); err != nil {
 		return err
 	}
 
@@ -68,8 +76,12 @@ func (r *ShopRepository) Update(ctx context.Context, shop *shopifysvc.Shop) erro
 		{Path: "currencyCode", Value: shop.CurrencyCode},
 	}
 
-	_, err := r.firestoreClient.Collection("shops").Doc(NormalizeShopID(shop.ID)).Update(ctx, updates)
+	normalizedID, err := NormalizeShopID(shop.ID)
 	if err != nil {
+		return err
+	}
+
+	if _, err := r.firestoreClient.Collection("shops").Doc(normalizedID).Update(ctx, updates); err != nil {
 		return err
 	}
 
@@ -77,7 +89,13 @@ func (r *ShopRepository) Update(ctx context.Context, shop *shopifysvc.Shop) erro
 }
 
 func (r *ShopRepository) Get(ctx context.Context, shopID string) (*shopifysvc.Shop, error) {
-	snapshot, err := r.firestoreClient.Collection("shops").Doc(NormalizeShopID(shopID)).Get(ctx)
+
+	normalizedID, err := NormalizeShopID(shopID)
+	if err != nil {
+		return nil, err
+	}
+
+	snapshot, err := r.firestoreClient.Collection("shops").Doc(normalizedID).Get(ctx)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return nil, ErrShopNotFound
@@ -115,8 +133,13 @@ func (r *ShopRepository) UpdateLastLogin(ctx context.Context, shopID string, at 
 	updates := []firestore.Update{
 		{Path: "lastLoginTime", Value: at},
 	}
-	_, err := r.firestoreClient.Collection("shops").Doc(NormalizeShopID(shopID)).Update(ctx, updates)
+
+	normalizedID, err := NormalizeShopID(shopID)
 	if err != nil {
+		return err
+	}
+
+	if _, err := r.firestoreClient.Collection("shops").Doc(normalizedID).Update(ctx, updates); err != nil {
 		return err
 	}
 

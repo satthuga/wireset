@@ -29,7 +29,12 @@ func (r *TokenRepository) GetToken(ctx context.Context, shopID string) (*model.S
 		return nil, errors.New("shop id is empty")
 	}
 
-	snapshot, err := r.firestoreClient.Collection("shops").Doc(NormalizeShopID(shopID)).Get(ctx)
+	normalizedShopID, err := NormalizeShopID(shopID)
+	if err != nil {
+		return nil, err
+	}
+
+	snapshot, err := r.firestoreClient.Collection("shops").Doc(normalizedShopID).Get(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +68,12 @@ func (r *TokenRepository) SaveAccessToken(ctx context.Context, token *model.Shop
 		},
 	}
 
-	_, err := r.firestoreClient.Collection("shops").Doc(NormalizeShopID(token.ShopID)).Update(ctx, updates)
+	normalizedShopID, err := NormalizeShopID(token.ShopID)
 	if err != nil {
+		return err
+	}
+
+	if _, err := r.firestoreClient.Collection("shops").Doc(normalizedShopID).Update(ctx, updates); err != nil {
 		return err
 	}
 

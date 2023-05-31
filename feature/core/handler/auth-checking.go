@@ -91,7 +91,14 @@ func (s *AuthHandler) checkin(ctx *fiber.Ctx) error {
 	}
 
 	// This user is authorized, create custom firebase token
-	firebaseToken, err := s.FireAuth.CustomToken(ctx.UserContext(), repository.NormalizeShopID(shop.ID))
+	normalizedId, err := repository.NormalizeShopID(shop.ID)
+	if err != nil {
+		s.LogSvc.Error("error while normalizing shop id", zap.Error(err))
+		return ctx.Status(http.StatusInternalServerError).JSON(model.AuthResponse{
+			Message: "Internal server error",
+		})
+	}
+	firebaseToken, err := s.FireAuth.CustomToken(ctx.UserContext(), normalizedId)
 	if err != nil {
 		s.LogSvc.Error("error while creating custom token", zap.Error(err))
 		return ctx.Status(http.StatusInternalServerError).JSON(model.AuthResponse{

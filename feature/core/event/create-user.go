@@ -71,7 +71,11 @@ func (h *CreateUserHandler) Handle(ctx context.Context, event interface{}) error
 // createUser
 func (h *CreateUserHandler) createUser(ctx context.Context, evt *model.ShopInstalledEvt) (*auth.UserRecord, error) {
 
-	shopID := repository.NormalizeShopID(evt.ShopID)
+	shopID, err := repository.NormalizeShopID(evt.ShopID)
+	if err != nil {
+		return nil, err
+	}
+
 	password := "LKoiu987(*&okj2oiuasdfOIUasdf@Dfsadf"
 	params := (&auth.UserToCreate{}).
 		UID(shopID).
