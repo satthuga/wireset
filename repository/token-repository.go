@@ -2,7 +2,8 @@ package repository
 
 import (
 	"context"
-	"errors"
+	"github.com/pkg/errors"
+
 	"github.com/aiocean/wireset/model"
 
 	"cloud.google.com/go/firestore"
@@ -31,12 +32,12 @@ func (r *TokenRepository) GetToken(ctx context.Context, shopID string) (*model.S
 
 	normalizedShopID, err := NormalizeShopID(shopID)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithMessage(err, "failed to normalize shop id")
 	}
 
 	snapshot, err := r.firestoreClient.Collection("shops").Doc(normalizedShopID).Get(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithMessage(err, "failed to get shop")
 	}
 
 	if !snapshot.Exists() {
@@ -45,7 +46,7 @@ func (r *TokenRepository) GetToken(ctx context.Context, shopID string) (*model.S
 
 	tokenString, err := snapshot.DataAtPath(firestore.FieldPath{"shopifyToken"})
 	if err != nil {
-		return nil, err
+		return nil, errors.WithMessage(err, "failed to get shopify token")
 	}
 
 	token := model.ShopifyToken{
@@ -70,11 +71,11 @@ func (r *TokenRepository) SaveAccessToken(ctx context.Context, token *model.Shop
 
 	normalizedShopID, err := NormalizeShopID(token.ShopID)
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "failed to normalize shop id")
 	}
 
 	if _, err := r.firestoreClient.Collection("shops").Doc(normalizedShopID).Update(ctx, updates); err != nil {
-		return err
+		return errors.WithMessage(err, "failed to update shop")
 	}
 
 	return nil

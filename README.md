@@ -1,3 +1,3 @@
 # wireset
 
-Tổng hợp một số wireset thông dụng khi phát triển ứng dụng trên Shopify.
+This repository contains a collection of common wireset configurations for developing applications on Shopify.

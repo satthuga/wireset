@@ -2,14 +2,15 @@ package handler
 
 import (
 	"context"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/aiocean/wireset/model"
 	"github.com/aiocean/wireset/repository"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
-	"net/http"
-	"strings"
-	"time"
 )
 
 func (s *AuthHandler) checkin(ctx *fiber.Ctx) error {
@@ -115,7 +116,7 @@ func (s *AuthHandler) checkin(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusOK).JSON(authResponse)
 }
 
-// CreateFirebaseToken
+// CreateFirebaseToken creates a custom Firebase token for the given user ID.
 func (s *AuthHandler) CreateFirebaseToken(ctx context.Context, shopID string) (string, error) {
 
 	token, err := s.FireAuth.CustomToken(ctx, shopID)

@@ -23,6 +23,8 @@ type DatabaseConfig struct {
 
 var EnvWireset = wire.NewSet(NewConfigFromEnv)
 
+// NewConfigFromEnv creates a new ConfigService from environment variables.
+// It returns an error if any of the required environment variables are missing.
 func NewConfigFromEnv() (*ConfigService, error) {
 	configService := &ConfigService{
 		ServiceName: os.Getenv("SERVICE_NAME"),

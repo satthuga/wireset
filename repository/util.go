@@ -2,8 +2,9 @@ package repository
 
 import (
 	"encoding/base64"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 func NormalizeShopID(shopID string) (string, error) {
@@ -26,7 +27,7 @@ func DenormalizeShopID(shopID string) (string, error) {
 
 	decoded, err := base64.StdEncoding.DecodeString(shopID)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to decode shopID")
 	}
 
 	return string(decoded), nil

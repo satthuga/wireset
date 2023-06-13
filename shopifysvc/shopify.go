@@ -1,24 +1,26 @@
 package shopifysvc
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/aiocean/wireset/cachesvc"
-	"github.com/aiocean/wireset/configsvc"
-	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/aiocean/wireset/cachesvc"
+	"github.com/aiocean/wireset/configsvc"
+	"github.com/pkg/errors"
+
 	"github.com/google/wire"
 	"github.com/tidwall/gjson"
 )
 
-const endpointTemplate = "https://%s.myshopify.com/admin/api/%s/graphql.json"
+const graphQlEndpointTemplate = "https://%s.myshopify.com/admin/api/%s/graphql.json"
+const restEndpointTemplate = "https://%s.myshopify.com/admin/api/%s"
 
 var DefaultWireset = wire.NewSet(
-	wire.Struct(new(ShopifyService), "*"),
+	NewShopifyService,
 	NewShopifyApp,
 )
 
@@ -26,6 +28,25 @@ type ShopifyService struct {
 	ConfigService *configsvc.ConfigService
 	ShopifyConfig *Config
 	CacheSvc      *cachesvc.CacheService
+	Logger        *zap.Logger
+}
+
+func NewShopifyService(
+	configService *configsvc.ConfigService,
+	shopifyConfig *Config,
+	cacheSvc *cachesvc.CacheService,
+	logger *zap.Logger,
+) (*ShopifyService, func(), error) {
+	cleanup := func() {
+
+	}
+
+	return &ShopifyService{
+		ConfigService: configService,
+		ShopifyConfig: shopifyConfig,
+		CacheSvc:      cacheSvc,
+		Logger:        logger.With(zap.Strings("tags", []string{"shopify"})),
+	}, cleanup, nil
 }
 
 type ShopifyClient struct {
@@ -54,26 +75,64 @@ func (s *ShopifyService) GetShopifyClient(shop, accessToken string) *ShopifyClie
 	return &client
 }
 
-func (c *ShopifyClient) doRequest(body string) (*gjson.Result, error) {
+// restRequest
+func (c *ShopifyClient) DoRestRequest(method, path string, body io.Reader) (*gjson.Result, error) {
+	endpoint := fmt.Sprintf(restEndpointTemplate, c.ShopifyDomain, c.ApiVersion) + path
+	req, err := http.NewRequest(method, endpoint, body)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create request")
+	}
 
-	url := fmt.Sprintf(endpointTemplate, c.ShopifyDomain, c.ApiVersion)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Shopify-Access-Token", c.AccessToken)
 
-	var jsonStr = []byte(body)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	client := &http.Client{}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to do request")
+	}
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+
+	data := gjson.ParseBytes(respBody)
+
+	return &data, nil
+}
+
+func (c *ShopifyClient) DoGraphqlRequest(body string) (*gjson.Result, error) {
+
+	endpoint := fmt.Sprintf(graphQlEndpointTemplate, c.ShopifyDomain, c.ApiVersion)
+
+	req, err := http.NewRequest("POST", endpoint, strings.NewReader(body))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create request")
 	}
 
 	req.Header.Set("Content-Type", "application/graphql")
 	req.Header.Set("X-Shopify-Access-Token", c.AccessToken)
 
 	client := &http.Client{}
+
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to do request")
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -86,7 +145,8 @@ func (c *ShopifyClient) doRequest(body string) (*gjson.Result, error) {
 }
 
 func (c *ShopifyClient) GetShopDetails() (*Shop, error) {
-	requestBody := `{
+	requestBody := `
+{
   shop{
 	id
     name
@@ -100,10 +160,11 @@ func (c *ShopifyClient) GetShopDetails() (*Shop, error) {
     }
   }
 }`
-	response, err := c.doRequest(requestBody)
+	response, err := c.DoGraphqlRequest(requestBody)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithMessage(err, "failed to get shop details")
 	}
+
 	shopData := response.Get("shop")
 	shopDetails := &Shop{
 		ID:                   shopData.Get("id").String(),
@@ -130,17 +191,20 @@ func (c *ShopifyClient) InstallScript(scriptUrl string) error {
 		return nil
 	}
 
-	requestBody := `{"query":"mutation scriptTagCreate($input: ScriptTagInput!) {
-							scriptTagCreate(input: $input) {
-								userErrors {
-									field
-									message
-								}
-								scriptTag {
-									src
-								}
-							}}","variables":{"input":{"cache":false,"displayScope":"ALL","src":"` + scriptUrl + `"}},"operationName":"scriptTagCreate"}'`
-	if _, err := c.doRequest(requestBody); err != nil {
+	requestBody := `
+{
+	"query":"mutation scriptTagCreate($input: ScriptTagInput!) {
+		scriptTagCreate(input: $input) {
+	userErrors {
+		field
+		message
+	}
+	scriptTag {
+		src
+	}
+}}","variables":{"input":{"cache":false,"displayScope":"ALL","src":"` + scriptUrl + `"}},"operationName":"scriptTagCreate"}'
+`
+	if _, err := c.DoGraphqlRequest(requestBody); err != nil {
 		return err
 	}
 	return nil
@@ -156,7 +220,7 @@ func (c *ShopifyClient) IsScriptInstalled(scriptUrl string) (bool, error) {
 			}
 		}
 	}"}`
-	response, err := c.doRequest(requestBody)
+	response, err := c.DoGraphqlRequest(requestBody)
 	if err != nil {
 		return false, err
 	}
@@ -185,9 +249,10 @@ func (c *ShopifyClient) InstallAppUninstalledWebhook() error {
 									id
 								}
 							}}","variables":{"input":{"topic":"APP_UNINSTALLED","format":"JSON","address":"` + c.configSvc.ServiceUrl + `/webhook/shopify/app-uninstalled"}},"operationName":"webhookSubscriptionCreate"}'`
-	if _, err := c.doRequest(requestBody); err != nil {
-		return err
+	if _, err := c.DoGraphqlRequest(requestBody); err != nil {
+		return errors.WithMessage(err, "failed to install app uninstalled webhook")
 	}
+
 	return nil
 }
 
@@ -201,20 +266,13 @@ func (c *ShopifyClient) IsAppUninstalledWebhookInstalled() (bool, error) {
 			}
 		}
 	}"}`
-	response, err := c.doRequest(requestBody)
+	response, err := c.DoGraphqlRequest(requestBody)
 	if err != nil {
-		return false, err
+		return false, errors.WithMessage(err, "failed to check if app uninstalled webhook is installed")
 	}
 
 	total := response.Get("webhookSubscriptions.edges.#").Int()
 	return total > 0, nil
-}
-
-var ErrProductNotFound = errors.New("product not found")
-
-// GetProductByHandle returns a product by handle
-func (c *ShopifyClient) GetProductByHandle(handle string) (*Product, error) {
-	panic("implement me")
 }
 
 // GetCurrentTheme returns the current theme
@@ -227,7 +285,7 @@ query {
     role
   }
 }`
-	response, err := c.doRequest(requestBody)
+	response, err := c.DoGraphqlRequest(requestBody)
 	if err != nil {
 		return "", errors.WithMessage(err, "failed to get current theme")
 	}

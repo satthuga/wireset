@@ -19,7 +19,7 @@ var DefaultWireset = wire.NewSet(
 
 	wire.Struct(new(handler.AuthHandler), "*"),
 	wire.Struct(new(handler.WebhookHandler), "*"),
-	wire.Struct(new(handler.WebsocketHandler), "*"),
+	handler.NewWebsocketHandler,
 	wire.Struct(new(handler.GdprHandler), "*"),
 	wire.Struct(new(handler.PrometheusHandler), "*"),
 )

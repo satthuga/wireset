@@ -87,7 +87,7 @@ func (h *CreateUserHandler) createUser(ctx context.Context, evt *model.ShopInsta
 
 	u, err := h.AuthClient.CreateUser(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithMessage(err, "create user failed")
 	}
 
 	return u, nil

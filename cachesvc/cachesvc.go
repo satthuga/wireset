@@ -1,9 +1,10 @@
 package cachesvc
 
 import (
+	"time"
+
 	"github.com/dgraph-io/ristretto"
 	"github.com/google/wire"
-	"time"
 )
 
 var DefaultWireset = wire.NewSet(NewCacheService)

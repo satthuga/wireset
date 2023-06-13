@@ -2,10 +2,11 @@ package repository
 
 import (
 	"context"
-	"errors"
+	"github.com/pkg/errors"
+	"time"
+
 	"github.com/aiocean/wireset/firestoresvc"
 	"github.com/aiocean/wireset/shopifysvc"
-	"time"
 
 	"cloud.google.com/go/firestore"
 	"github.com/google/wire"
@@ -35,7 +36,7 @@ var ShopRepoWireset = wire.NewSet(
 func (r *ShopRepository) IsShopExists(ctx context.Context, shopID string) (bool, error) {
 	normalizedID, err := NormalizeShopID(shopID)
 	if err != nil {
-		return false, err
+		return false, errors.WithMessage(err, "normalize shop id")
 	}
 	snapshot, err := r.firestoreClient.Collection("shops").Doc(normalizedID).Get(ctx)
 	if err != nil {
@@ -43,7 +44,7 @@ func (r *ShopRepository) IsShopExists(ctx context.Context, shopID string) (bool,
 			return false, nil
 		}
 
-		return false, err
+		return false, errors.WithMessage(err, "get shop")
 	}
 
 	return snapshot.Exists(), nil
@@ -52,11 +53,11 @@ func (r *ShopRepository) IsShopExists(ctx context.Context, shopID string) (bool,
 func (r *ShopRepository) Create(ctx context.Context, shop *shopifysvc.Shop) error {
 	normalizedID, err := NormalizeShopID(shop.ID)
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "normalize shop id")
 	}
 
 	if _, err := r.firestoreClient.Collection("shops").Doc(normalizedID).Set(ctx, shop); err != nil {
-		return err
+		return errors.WithMessage(err, "create shop")
 	}
 
 	return nil
@@ -78,11 +79,11 @@ func (r *ShopRepository) Update(ctx context.Context, shop *shopifysvc.Shop) erro
 
 	normalizedID, err := NormalizeShopID(shop.ID)
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "normalize shop id")
 	}
 
 	if _, err := r.firestoreClient.Collection("shops").Doc(normalizedID).Update(ctx, updates); err != nil {
-		return err
+		return errors.WithMessage(err, "update shop")
 	}
 
 	return nil
@@ -92,7 +93,7 @@ func (r *ShopRepository) Get(ctx context.Context, shopID string) (*shopifysvc.Sh
 
 	normalizedID, err := NormalizeShopID(shopID)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithMessage(err, "normalize shop id")
 	}
 
 	snapshot, err := r.firestoreClient.Collection("shops").Doc(normalizedID).Get(ctx)
@@ -100,12 +101,12 @@ func (r *ShopRepository) Get(ctx context.Context, shopID string) (*shopifysvc.Sh
 		if status.Code(err) == codes.NotFound {
 			return nil, ErrShopNotFound
 		}
-		return nil, err
+		return nil, errors.WithMessage(err, "get shop")
 	}
 
 	shop := shopifysvc.Shop{}
 	if err = snapshot.DataTo(&shop); err != nil {
-		return nil, err
+		return nil, errors.WithMessage(err, "data to shop")
 	}
 
 	return &shop, nil
@@ -118,12 +119,12 @@ func (r *ShopRepository) GetByDomain(ctx context.Context, domain string) (*shopi
 
 	doc, err := cur.Next()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithMessage(err, "get shop")
 	}
 
 	shop := shopifysvc.Shop{}
 	if err = doc.DataTo(&shop); err != nil {
-		return nil, err
+		return nil, errors.WithMessage(err, "data to shop")
 	}
 
 	return &shop, nil
@@ -136,11 +137,11 @@ func (r *ShopRepository) UpdateLastLogin(ctx context.Context, shopID string, at 
 
 	normalizedID, err := NormalizeShopID(shopID)
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "normalize shop id")
 	}
 
 	if _, err := r.firestoreClient.Collection("shops").Doc(normalizedID).Update(ctx, updates); err != nil {
-		return err
+		return errors.WithMessage(err, "update shop")
 	}
 
 	return nil

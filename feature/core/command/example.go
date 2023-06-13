@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"fmt"
+
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/aiocean/wireset/model"
 )

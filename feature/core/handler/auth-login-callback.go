@@ -1,12 +1,13 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/aiocean/wireset/model"
 	"github.com/gofiber/fiber/v2"
-	"github.com/pkg/errors"
-	"net/http"
 )
 
+// getAccessToken is a helper function exchange code with access token
 func (s *AuthHandler) getAccessToken(context *fiber.Ctx) (string, error) {
 	shopDomain := context.Query("shop")
 	accessToken, err := s.ShopifyApp.GetAccessToken(shopDomain, context.Query("code"))
@@ -17,6 +18,7 @@ func (s *AuthHandler) getAccessToken(context *fiber.Ctx) (string, error) {
 	return accessToken, nil
 }
 
+// loginCallback is a handler to handle login callback from shopify
 func (s *AuthHandler) loginCallback(ctx *fiber.Ctx) error {
 	if err := s.verifyLoginRequest(ctx); err != nil {
 		return fiber.NewError(http.StatusBadRequest, err.Error())
@@ -62,6 +64,7 @@ func (s *AuthHandler) loginCallback(ctx *fiber.Ctx) error {
 	}
 
 	redirectUrl := "https://" + shopName + "/admin/apps/" + s.ShopifyConfig.ClientId
+
 	return ctx.Redirect(redirectUrl)
 }
 
@@ -74,10 +77,11 @@ func (s *AuthHandler) verifyLoginRequest(context *fiber.Ctx) error {
 	host := context.Query("host")
 
 	if state != s.ShopifyConfig.LoginNonce {
-		return errors.New("nonce is not matched")
+		return fiber.NewError(http.StatusBadRequest, "Invalid nonce")
 	}
 
 	message := "code=" + code + "&host=" + host + "&shop=" + shopDomain + "&state=" + state + "&timestamp=" + timestamp
 	s.ShopifyApp.VerifyMessage(message, messageMAC)
+
 	return nil
 }

@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+
 	"github.com/aiocean/wireset/model"
 	"github.com/aiocean/wireset/shopifysvc"
 
@@ -14,6 +15,7 @@ type InstallWebhookHandler struct {
 	ShopifySvc *shopifysvc.ShopifyService
 }
 
+// NewInstallWebhookHandler creates a new InstallWebhookHandler.
 func NewInstallWebhookHandler(shopifySvc *shopifysvc.ShopifyService) *InstallWebhookHandler {
 	return &InstallWebhookHandler{
 		ShopifySvc: shopifySvc,

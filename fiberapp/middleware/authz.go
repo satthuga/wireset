@@ -25,6 +25,7 @@ type AuthzController struct {
 
 func NewAuthzController(
 	configSvc *configsvc.ConfigService,
+	shopifyConfig *shopifysvc.Config,
 	tokenRepository *repository2.TokenRepository,
 	shopRepository *repository2.ShopRepository,
 	shopifyApp *goshopify.App,
@@ -34,6 +35,7 @@ func NewAuthzController(
 	controller := &AuthzController{
 		logger:          localLogger,
 		configService:   configSvc,
+		shopifyConfig:   shopifyConfig,
 		tokenRepository: tokenRepository,
 		shopRepository:  shopRepository,
 		shopifyApp:      shopifyApp,
@@ -43,10 +45,6 @@ func NewAuthzController(
 
 func (s *AuthzController) IsAuthRequired(path string) bool {
 	if strings.HasPrefix(path, "/auth") {
-		return false
-	}
-
-	if strings.HasPrefix(path, "/ws") {
 		return false
 	}
 

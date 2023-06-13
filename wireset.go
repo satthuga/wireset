@@ -13,6 +13,9 @@ import (
 	"github.com/google/wire"
 )
 
+// ShopifyAppWireset is a wire set that provides dependencies for a Shopify app.
+// It includes dependencies for repositories, Shopify service, Fiber app, Firebase authentication service,
+// server, tracing service, logging service, pubsub service, and cache service.
 var ShopifyAppWireset = wire.NewSet(
 	repository.ShopRepoWireset,
 	repository.TokenRepoWireset,
@@ -26,6 +29,10 @@ var ShopifyAppWireset = wire.NewSet(
 	pubsub.DefaultWireset,
 	cachesvc.DefaultWireset,
 )
+
+// NormalAppWireset is a wire set that provides dependencies for a normal app.
+// It includes dependencies for Fiber app, Firebase authentication service, server,
+// tracing service, logging service, pubsub service, and cache service.
 var NormalAppWireset = wire.NewSet(
 	fiberapp.DefaultWireset,
 	fireauthsvc.DefaultWireset,

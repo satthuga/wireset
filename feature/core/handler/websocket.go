@@ -4,12 +4,21 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 	"log"
+	"sync"
 )
 
 type WebsocketHandler struct {
+	connections map[string]*websocket.Conn
+	mutex       sync.Mutex
+}
+
+func NewWebsocketHandler() *WebsocketHandler {
+	return &WebsocketHandler{}
 }
 
 func (s *WebsocketHandler) Register(fiberApp *fiber.App) {
+	s.connections = make(map[string]*websocket.Conn)
+
 	fiberApp.Use("/ws", func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			c.Locals("allowed", true)
@@ -21,13 +30,26 @@ func (s *WebsocketHandler) Register(fiberApp *fiber.App) {
 		})
 	})
 
-	fiberApp.Get("/ws/:id", websocket.New(func(conn *websocket.Conn) {
+	fiberApp.Get("/ws", websocket.New(func(conn *websocket.Conn) {
 		var (
 			mt  int
 			msg []byte
 			err error
 		)
-		// add conn to pool
+
+		// get token from header
+		shopID := conn.Locals("shop_id").(string)
+
+		//add conn to pool
+		s.mutex.Lock()
+		s.connections[shopID] = conn
+		s.mutex.Unlock()
+
+		defer func() {
+			s.mutex.Lock()
+			delete(s.connections, shopID)
+			s.mutex.Unlock()
+		}()
 
 		for {
 			if mt, msg, err = conn.ReadMessage(); err != nil {
@@ -36,11 +58,15 @@ func (s *WebsocketHandler) Register(fiberApp *fiber.App) {
 			}
 			log.Printf("recv: %s", msg)
 
-			if err = conn.WriteMessage(mt, msg); err != nil {
-				log.Println("write:", err)
-				break
+			// broadcast message to all connected sockets
+			s.mutex.Lock()
+			for _, c := range s.connections {
+				if err = c.WriteMessage(mt, msg); err != nil {
+					log.Println("write:", err)
+					break
+				}
 			}
+			s.mutex.Unlock()
 		}
-
 	}))
 }

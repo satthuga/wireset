@@ -1,9 +1,11 @@
 package repository
 
 import (
-	"cloud.google.com/go/firestore"
 	"context"
+
+	"cloud.google.com/go/firestore"
 	"github.com/google/wire"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -14,16 +16,16 @@ type StateRepository struct {
 	Logger          *zap.Logger
 }
 
-// SetState set state to firestore
+// SetShopState set state to firestore
 func (r *StateRepository) SetShopState(ctx context.Context, shopID string, state map[string]interface{}) error {
 
 	normalizedID, err := NormalizeShopID(shopID)
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "normalize shop id")
 	}
 
 	if _, err := r.FirestoreClient.Collection("states").Doc(normalizedID).Set(ctx, state, firestore.MergeAll); err != nil {
-		return err
+		return errors.WithMessage(err, "set state to firestore")
 	}
 
 	return nil
