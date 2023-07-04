@@ -44,7 +44,6 @@ func (s *AuthHandler) loginCallback(ctx *fiber.Ctx) error {
 			return fiber.NewError(http.StatusBadRequest, err.Error())
 		}
 	} else if !exists {
-
 		if err := s.ShopRepo.Create(ctx.UserContext(), shopDetails); err != nil {
 			return fiber.NewError(http.StatusBadRequest, err.Error())
 		}
