@@ -4,8 +4,8 @@ import (
 	"github.com/aiocean/wireset/feature/core/command"
 	"github.com/aiocean/wireset/feature/core/event"
 	"github.com/aiocean/wireset/feature/core/handler"
+	"github.com/aiocean/wireset/fiberapp"
 	"github.com/aiocean/wireset/pubsub"
-	"github.com/gofiber/fiber/v2"
 	"github.com/google/wire"
 )
 
@@ -37,22 +37,22 @@ type FeatureCore struct {
 	GdprHandler       *handler.GdprHandler
 	PrometheusHandler *handler.PrometheusHandler
 
-	HandlerRegistry *pubsub.HandlerRegistry
-	FiberApp        *fiber.App
+	PubsubRegistry *pubsub.HandlerRegistry
+	HttpRegistry   *fiberapp.Registry
 }
 
 func (f *FeatureCore) Init() error {
-	f.HandlerRegistry.AddCommandHandler(f.InstallWebhookCmdHandler)
-	f.HandlerRegistry.AddCommandHandler(f.SetShopStateCmdHandler)
+	f.PubsubRegistry.AddCommandHandler(f.InstallWebhookCmdHandler)
+	f.PubsubRegistry.AddCommandHandler(f.SetShopStateCmdHandler)
 
-	f.HandlerRegistry.AddEventHandler(f.ShopInstalledEvtHandler)
-	f.HandlerRegistry.AddEventHandler(f.WelcomeEvtHandler)
+	f.PubsubRegistry.AddEventHandler(f.ShopInstalledEvtHandler)
+	f.PubsubRegistry.AddEventHandler(f.WelcomeEvtHandler)
 
-	f.AuthHandler.Register(f.FiberApp)
-	f.WebhookHandler.Register(f.FiberApp)
-	f.WebsocketHandler.Register(f.FiberApp)
-	f.GdprHandler.Register(f.FiberApp)
-	f.PrometheusHandler.Register(f.FiberApp)
+	f.HttpRegistry.AddHttpHandler(f.AuthHandler)
+	f.HttpRegistry.AddHttpHandler(f.WebhookHandler)
+	f.HttpRegistry.AddHttpHandler(f.WebsocketHandler)
+	f.HttpRegistry.AddHttpHandler(f.GdprHandler)
+	f.HttpRegistry.AddHttpHandler(f.PrometheusHandler)
 
 	return nil
 }

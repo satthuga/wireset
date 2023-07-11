@@ -1,9 +1,10 @@
 package middleware
 
 import (
+	"github.com/aiocean/wireset/cachesvc"
 	"github.com/aiocean/wireset/configsvc"
-	model2 "github.com/aiocean/wireset/model"
-	repository2 "github.com/aiocean/wireset/repository"
+	"github.com/aiocean/wireset/model"
+	"github.com/aiocean/wireset/repository"
 	"github.com/aiocean/wireset/shopifysvc"
 	"go.uber.org/zap"
 	"net/http"
@@ -17,8 +18,9 @@ import (
 type AuthzController struct {
 	configService   *configsvc.ConfigService
 	shopifyConfig   *shopifysvc.Config
-	tokenRepository *repository2.TokenRepository
-	shopRepository  *repository2.ShopRepository
+	tokenRepository *repository.TokenRepository
+	shopRepository  *repository.ShopRepository
+	cacheSvc        *cachesvc.CacheService
 	shopifyApp      *goshopify.App
 	logger          *zap.Logger
 }
@@ -26,10 +28,11 @@ type AuthzController struct {
 func NewAuthzController(
 	configSvc *configsvc.ConfigService,
 	shopifyConfig *shopifysvc.Config,
-	tokenRepository *repository2.TokenRepository,
-	shopRepository *repository2.ShopRepository,
+	tokenRepository *repository.TokenRepository,
+	shopRepository *repository.ShopRepository,
 	shopifyApp *goshopify.App,
 	logger *zap.Logger,
+	cacheSvc *cachesvc.CacheService,
 ) *AuthzController {
 	localLogger := logger.With(zap.Strings("tags", []string{"AuthzController"}))
 	controller := &AuthzController{
@@ -39,10 +42,14 @@ func NewAuthzController(
 		tokenRepository: tokenRepository,
 		shopRepository:  shopRepository,
 		shopifyApp:      shopifyApp,
+		cacheSvc:        cacheSvc,
 	}
+
 	return controller
 }
 
+// IsAuthRequired check if the path is required authentication
+// TODO by hard code this path, it's become not flexible, hard to maintain. Maybe let's feature to register it into the http handler registry is better
 func (s *AuthzController) IsAuthRequired(path string) bool {
 	if strings.HasPrefix(path, "/auth") {
 		return false
@@ -59,6 +66,7 @@ func (s *AuthzController) IsAuthRequired(path string) bool {
 	return true
 }
 
+// TODO the token which sent from shopify have expired time, we can use this time to cache the authz result, so that we do not need to query database every time
 func (s *AuthzController) Middleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		if !s.IsAuthRequired(c.OriginalURL()) {
@@ -67,19 +75,18 @@ func (s *AuthzController) Middleware() fiber.Handler {
 
 		authentication := strings.TrimPrefix(c.Get("authorization"), "Bearer ")
 		if authentication == "" {
-			return c.Status(http.StatusUnauthorized).JSON(model2.AuthResponse{
+			return c.Status(http.StatusUnauthorized).JSON(model.AuthResponse{
 				Message: "Unauthorized",
 			})
 		}
 
-		var claims model2.CustomJwtClaims
+		var claims model.CustomJwtClaims
 		token, err := jwt.ParseWithClaims(authentication, &claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte(s.shopifyConfig.ClientSecret), nil
 		})
-
 		if err != nil {
-			return c.Status(http.StatusUnauthorized).JSON(model2.AuthResponse{
-				Message: "Unauthorized",
+			return c.Status(http.StatusUnauthorized).JSON(model.AuthResponse{
+				Message: "Unauthorized: " + err.Error(),
 			})
 		}
 
@@ -94,25 +101,24 @@ func (s *AuthzController) Middleware() fiber.Handler {
 
 		shop, err := s.shopRepository.GetByDomain(c.UserContext(), host)
 		if err != nil {
-			return c.Status(http.StatusUnauthorized).JSON(model2.AuthResponse{
-				Message:           "Unauthorized",
+			return c.Status(http.StatusUnauthorized).JSON(model.AuthResponse{
+				Message:           "Unauthorized: " + err.Error(),
 				AuthenticationUrl: authUrl,
 			})
 		}
 
 		shopifyToken, err := s.tokenRepository.GetToken(c.UserContext(), shop.ID)
 		if err != nil {
-			return c.Status(http.StatusUnauthorized).JSON(model2.AuthResponse{
-				Message:           "Unauthorized",
+			return c.Status(http.StatusUnauthorized).JSON(model.AuthResponse{
+				Message:           "Unauthorized: " + err.Error(),
 				AuthenticationUrl: authUrl,
 			})
 		}
 
-		s.logger.Debug("shopifyToken", zap.Any("shopifyToken", shopifyToken))
-
 		c.Locals("shop", shop)
 		c.Locals("shop_id", shop.ID)
 		c.Locals("access_token", shopifyToken.AccessToken)
+
 		return c.Next()
 
 	}

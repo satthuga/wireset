@@ -19,6 +19,7 @@ import (
 
 var DefaultWireset = wire.NewSet(
 	NewFiberApp,
+	NewRegistry,
 	middleware.NewAuthzController,
 )
 
@@ -27,6 +28,7 @@ func NewFiberApp(
 	authzMiddleware *middleware.AuthzController,
 	cfg *configsvc.ConfigService,
 ) (*fiber.App, func(), error) {
+
 	app := fiber.New(fiber.Config{
 		AppName:               cfg.ServiceName,
 		JSONEncoder:           json.Marshal,
@@ -48,11 +50,14 @@ func NewFiberApp(
 
 	logger := logsvc.With(zap.Strings("tags", []string{"fiber"}))
 
+	// enable middlewares
 	app.Use(cors.New())
 	app.Use(fiberzap.New(fiberzap.Config{
 		Logger: logger,
 	}))
 	app.Use(authzMiddleware.Middleware())
+
+	// compress
 	app.Use(compress.New(compress.Config{
 		Level: compress.LevelBestSpeed,
 	}))
@@ -66,8 +71,7 @@ func NewFiberApp(
 
 	cleanup := func() {
 		logger.Info("Cleaning up")
-		err := app.Shutdown()
-		if err != nil {
+		if err := app.Shutdown(); err != nil {
 			logger.Error("failed to shut down fiber app", zap.Error(err))
 			return
 		}
