@@ -2,18 +2,18 @@ package handler
 
 import (
 	"context"
+	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/aiocean/wireset/model"
 	"github.com/aiocean/wireset/repository"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 )
 
-func (s *AuthHandler) checkin(ctx *fiber.Ctx) error {
+func (s *AuthHandler) Checkin(ctx *fiber.Ctx) error {
 	// scenario 0: this request was sent with authorization header, usually from shopify app bridge
 	authentication := strings.TrimPrefix(ctx.Get("authorization"), "Bearer ")
 
@@ -31,7 +31,7 @@ func (s *AuthHandler) checkin(ctx *fiber.Ctx) error {
 	}
 
 	if authResponse, ok := s.CacheSvc.Get(authentication); ok {
-		s.LogSvc.Info("checkin cache hit")
+		s.LogSvc.Info("Checkin cache hit")
 		return ctx.Status(http.StatusOK).JSON(authResponse)
 	}
 

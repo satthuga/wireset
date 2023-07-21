@@ -12,7 +12,6 @@ require (
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/dgraph-io/dgo/v2 v2.2.0
 	github.com/dgraph-io/ristretto v0.1.1
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/garsue/watermillzap v1.2.0
 	github.com/goccy/go-json v0.10.2
 	github.com/gofiber/adaptor/v2 v2.2.1
@@ -27,6 +26,7 @@ require (
 	google.golang.org/api v0.125.0
 	google.golang.org/grpc v1.55.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.51.0
+	github.com/golang-jwt/jwt/v5 v5.0.0
 )
 
 require (

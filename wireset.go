@@ -4,6 +4,7 @@ import (
 	"github.com/aiocean/wireset/cachesvc"
 	"github.com/aiocean/wireset/fiberapp"
 	"github.com/aiocean/wireset/fireauthsvc"
+	"github.com/aiocean/wireset/firestoresvc"
 	"github.com/aiocean/wireset/logsvc"
 	"github.com/aiocean/wireset/pubsub"
 	"github.com/aiocean/wireset/repository"
@@ -22,6 +23,7 @@ var ShopifyAppWireset = wire.NewSet(
 	repository.StateRepoWireset,
 	shopifysvc.DefaultWireset,
 	fiberapp.DefaultWireset,
+	firestoresvc.DefaultWireset,
 	fireauthsvc.DefaultWireset,
 	server.DefaultWireset,
 	tracersvc.TracerSvcWireset,
@@ -36,6 +38,7 @@ var ShopifyAppWireset = wire.NewSet(
 var NormalAppWireset = wire.NewSet(
 	fiberapp.DefaultWireset,
 	fireauthsvc.DefaultWireset,
+	firestoresvc.DefaultWireset,
 	server.DefaultWireset,
 	tracersvc.TracerSvcWireset,
 	logsvc.DefaultWireset,

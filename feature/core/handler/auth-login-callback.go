@@ -18,8 +18,8 @@ func (s *AuthHandler) getAccessToken(context *fiber.Ctx) (string, error) {
 	return accessToken, nil
 }
 
-// loginCallback is a handler to handle login callback from shopify
-func (s *AuthHandler) loginCallback(ctx *fiber.Ctx) error {
+// LoginCallback is a handler to handle login callback from shopify
+func (s *AuthHandler) LoginCallback(ctx *fiber.Ctx) error {
 	if err := s.verifyLoginRequest(ctx); err != nil {
 		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}

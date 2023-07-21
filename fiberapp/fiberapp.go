@@ -2,7 +2,6 @@ package fiberapp
 
 import (
 	"github.com/aiocean/wireset/configsvc"
-	"github.com/aiocean/wireset/fiberapp/middleware"
 	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
@@ -20,12 +19,10 @@ import (
 var DefaultWireset = wire.NewSet(
 	NewFiberApp,
 	NewRegistry,
-	middleware.NewAuthzController,
 )
 
 func NewFiberApp(
 	logsvc *zap.Logger,
-	authzMiddleware *middleware.AuthzController,
 	cfg *configsvc.ConfigService,
 ) (*fiber.App, func(), error) {
 
@@ -55,7 +52,6 @@ func NewFiberApp(
 	app.Use(fiberzap.New(fiberzap.Config{
 		Logger: logger,
 	}))
-	app.Use(authzMiddleware.Middleware())
 
 	// compress
 	app.Use(compress.New(compress.Config{

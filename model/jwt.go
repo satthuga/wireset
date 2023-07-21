@@ -1,6 +1,8 @@
 package model
 
-import "github.com/dgrijalva/jwt-go"
+import (
+	"github.com/golang-jwt/jwt/v5"
+)
 
 type CustomJwtClaims struct {
 	Iss  string `json:"iss"`
@@ -12,5 +14,5 @@ type CustomJwtClaims struct {
 	Iat  int    `json:"iat"`
 	Jti  string `json:"jti"`
 	Sid  string `json:"sid"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }

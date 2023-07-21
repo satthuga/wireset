@@ -15,14 +15,6 @@ type WebhookHandler struct {
 	FiberApp *fiber.App
 }
 
-// Init
-func (s *WebhookHandler) Register(fiberApp *fiber.App) {
-	shopGroup := fiberApp.Group("/webhook")
-	{
-		shopGroup.Get("/shopify/app-uninstalled", s.Uninstalled)
-	}
-}
-
 func (s *WebhookHandler) Uninstalled(c *fiber.Ctx) error {
 	s.Pubsub.Send(c.UserContext(), &model.ShopUninstalledEvt{
 		MyshopifyDomain: c.Query("shop"),

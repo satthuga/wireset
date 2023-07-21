@@ -16,57 +16,50 @@ func NewWebsocketHandler() *WebsocketHandler {
 	return &WebsocketHandler{}
 }
 
-func (s *WebsocketHandler) Register(fiberApp *fiber.App) {
-	s.connections = make(map[string]*websocket.Conn)
+func (s *WebsocketHandler) CheckUpgrade(c *fiber.Ctx) error {
+	if websocket.IsWebSocketUpgrade(c) {
+		c.Locals("allowed", true)
+		return c.Next()
+	}
 
-	fiberApp.Use("/ws", func(c *fiber.Ctx) error {
-		if websocket.IsWebSocketUpgrade(c) {
-			c.Locals("allowed", true)
-			return c.Next()
-		}
-
-		return c.JSON(map[string]interface{}{
-			"token": "df",
-		})
+	return c.JSON(map[string]interface{}{
+		"token": "df",
 	})
+}
 
-	fiberApp.Get("/ws", websocket.New(func(conn *websocket.Conn) {
-		var (
-			mt  int
-			msg []byte
-			err error
-		)
+func (s *WebsocketHandler) Handle(conn *websocket.Conn) {
+	var (
+		mt  int
+		msg []byte
+		err error
+	)
 
-		// get token from header
-		shopID := conn.Locals("shop_id").(string)
+	//add conn to pool
+	s.mutex.Lock()
+	s.connections["TODO"] = conn
+	s.mutex.Unlock()
 
-		//add conn to pool
+	defer func() {
 		s.mutex.Lock()
-		s.connections[shopID] = conn
+		delete(s.connections, "TODO")
 		s.mutex.Unlock()
+	}()
 
-		defer func() {
-			s.mutex.Lock()
-			delete(s.connections, shopID)
-			s.mutex.Unlock()
-		}()
+	for {
+		if mt, msg, err = conn.ReadMessage(); err != nil {
+			log.Println("read:", err)
+			break
+		}
+		log.Printf("recv: %s", msg)
 
-		for {
-			if mt, msg, err = conn.ReadMessage(); err != nil {
-				log.Println("read:", err)
+		// broadcast message to all connected sockets
+		s.mutex.Lock()
+		for _, c := range s.connections {
+			if err = c.WriteMessage(mt, msg); err != nil {
+				log.Println("write:", err)
 				break
 			}
-			log.Printf("recv: %s", msg)
-
-			// broadcast message to all connected sockets
-			s.mutex.Lock()
-			for _, c := range s.connections {
-				if err = c.WriteMessage(mt, msg); err != nil {
-					log.Println("write:", err)
-					break
-				}
-			}
-			s.mutex.Unlock()
 		}
-	}))
+		s.mutex.Unlock()
+	}
 }

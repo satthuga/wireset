@@ -5,7 +5,6 @@ import (
 	"github.com/pkg/errors"
 	"time"
 
-	"github.com/aiocean/wireset/firestoresvc"
 	"github.com/aiocean/wireset/shopifysvc"
 
 	"cloud.google.com/go/firestore"
@@ -30,7 +29,6 @@ var ErrShopNotFound = errors.New("shop not found")
 
 var ShopRepoWireset = wire.NewSet(
 	NewShopRepository,
-	firestoresvc.DefaultWireset,
 )
 
 func (r *ShopRepository) IsShopExists(ctx context.Context, shopID string) (bool, error) {

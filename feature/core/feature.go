@@ -4,9 +4,14 @@ import (
 	"github.com/aiocean/wireset/feature/core/command"
 	"github.com/aiocean/wireset/feature/core/event"
 	"github.com/aiocean/wireset/feature/core/handler"
+	"github.com/aiocean/wireset/feature/core/middleware"
 	"github.com/aiocean/wireset/fiberapp"
 	"github.com/aiocean/wireset/pubsub"
+	"github.com/gofiber/adaptor/v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/websocket/v2"
 	"github.com/google/wire"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var DefaultWireset = wire.NewSet(
@@ -17,11 +22,12 @@ var DefaultWireset = wire.NewSet(
 	event.NewCreateUserHandler,
 	event.NewWelcomeHandler,
 
+	middleware.NewAuthzController,
+
 	wire.Struct(new(handler.AuthHandler), "*"),
 	wire.Struct(new(handler.WebhookHandler), "*"),
 	handler.NewWebsocketHandler,
 	wire.Struct(new(handler.GdprHandler), "*"),
-	wire.Struct(new(handler.PrometheusHandler), "*"),
 )
 
 type FeatureCore struct {
@@ -31,11 +37,12 @@ type FeatureCore struct {
 	ShopInstalledEvtHandler *event.CreateUserHandler
 	WelcomeEvtHandler       *event.WelcomeHandler
 
-	AuthHandler       *handler.AuthHandler
-	WebhookHandler    *handler.WebhookHandler
-	WebsocketHandler  *handler.WebsocketHandler
-	GdprHandler       *handler.GdprHandler
-	PrometheusHandler *handler.PrometheusHandler
+	authzMiddleware *middleware.ShopifyAuthzMiddleware
+
+	AuthHandler      *handler.AuthHandler
+	WebhookHandler   *handler.WebhookHandler
+	WebsocketHandler *handler.WebsocketHandler
+	GdprHandler      *handler.GdprHandler
 
 	PubsubRegistry *pubsub.HandlerRegistry
 	HttpRegistry   *fiberapp.Registry
@@ -48,11 +55,54 @@ func (f *FeatureCore) Init() error {
 	f.PubsubRegistry.AddEventHandler(f.ShopInstalledEvtHandler)
 	f.PubsubRegistry.AddEventHandler(f.WelcomeEvtHandler)
 
-	f.HttpRegistry.AddHttpHandler(f.AuthHandler)
-	f.HttpRegistry.AddHttpHandler(f.WebhookHandler)
-	f.HttpRegistry.AddHttpHandler(f.WebsocketHandler)
-	f.HttpRegistry.AddHttpHandler(f.GdprHandler)
-	f.HttpRegistry.AddHttpHandler(f.PrometheusHandler)
+	f.HttpRegistry.AddHttpMiddleware("/", f.authzMiddleware.Handle)
 
+	f.HttpRegistry.AddHttpHandlers([]*fiberapp.HttpHandler{
+		{
+			Method:  fiber.MethodGet,
+			Path:    "/auth/shopify/login-callback",
+			Handler: f.AuthHandler.LoginCallback,
+		},
+		{
+			Method:  fiber.MethodGet,
+			Path:    "/auth/shopify/checkin",
+			Handler: f.AuthHandler.Checkin,
+		},
+		{
+			Method:  fiber.MethodGet,
+			Path:    "/webhook/shopify/app-uninstalled",
+			Handler: f.WebhookHandler.Uninstalled,
+		},
+		{
+			Method:  fiber.MethodGet,
+			Path:    "/ws",
+			Handler: f.WebsocketHandler.CheckUpgrade,
+		},
+		{
+			Method:  fiber.MethodGet,
+			Path:    "/ws/:id",
+			Handler: websocket.New(f.WebsocketHandler.Handle),
+		},
+		{
+			Method:  fiber.MethodPost,
+			Path:    "/gdpr/customers/data_request",
+			Handler: f.GdprHandler.CustomerDataRequest,
+		},
+		{
+			Method:  fiber.MethodPost,
+			Path:    "/gdpr/customers/redact",
+			Handler: f.GdprHandler.CustomerRedact,
+		},
+		{
+			Method:  fiber.MethodPost,
+			Path:    "/gdpr/shop/redact",
+			Handler: f.GdprHandler.ShopRedact,
+		},
+		{
+			Method:  fiber.MethodGet,
+			Path:    "/metrics",
+			Handler: adaptor.HTTPHandler(promhttp.Handler()),
+		},
+	})
 	return nil
 }
