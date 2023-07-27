@@ -7,11 +7,9 @@ import (
 	"github.com/aiocean/wireset/feature/core/middleware"
 	"github.com/aiocean/wireset/fiberapp"
 	"github.com/aiocean/wireset/pubsub"
-	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 	"github.com/google/wire"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var DefaultWireset = wire.NewSet(
@@ -55,6 +53,7 @@ func (f *FeatureCore) Init() error {
 	f.PubsubRegistry.AddEventHandler(f.ShopInstalledEvtHandler)
 	f.PubsubRegistry.AddEventHandler(f.WelcomeEvtHandler)
 
+	f.HttpRegistry.AddHttpMiddleware("/ws", f.WebsocketHandler.CheckUpgrade)
 	f.HttpRegistry.AddHttpMiddleware("/", f.authzMiddleware.Handle)
 
 	f.HttpRegistry.AddHttpHandlers([]*fiberapp.HttpHandler{
@@ -75,11 +74,6 @@ func (f *FeatureCore) Init() error {
 		},
 		{
 			Method:  fiber.MethodGet,
-			Path:    "/ws",
-			Handler: f.WebsocketHandler.CheckUpgrade,
-		},
-		{
-			Method:  fiber.MethodGet,
 			Path:    "/ws/:id",
 			Handler: websocket.New(f.WebsocketHandler.Handle),
 		},
@@ -97,11 +91,6 @@ func (f *FeatureCore) Init() error {
 			Method:  fiber.MethodPost,
 			Path:    "/gdpr/shop/redact",
 			Handler: f.GdprHandler.ShopRedact,
-		},
-		{
-			Method:  fiber.MethodGet,
-			Path:    "/metrics",
-			Handler: adaptor.HTTPHandler(promhttp.Handler()),
 		},
 	})
 	return nil

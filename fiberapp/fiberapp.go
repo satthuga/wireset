@@ -1,8 +1,8 @@
 package fiberapp
 
 import (
+	"encoding/json"
 	"github.com/aiocean/wireset/configsvc"
-	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
@@ -26,6 +26,8 @@ func NewFiberApp(
 	cfg *configsvc.ConfigService,
 ) (*fiber.App, func(), error) {
 
+	logger := logsvc.With(zap.Strings("tags", []string{"fiber"}))
+
 	app := fiber.New(fiber.Config{
 		AppName:               cfg.ServiceName,
 		JSONEncoder:           json.Marshal,
@@ -39,13 +41,13 @@ func NewFiberApp(
 				code = e.Code
 			}
 
+			logger.Error("error", zap.Error(err))
+
 			return c.Status(code).JSON(fiber.Map{
 				"error": err.Error(),
 			})
 		},
 	})
-
-	logger := logsvc.With(zap.Strings("tags", []string{"fiber"}))
 
 	// enable middlewares
 	app.Use(cors.New())

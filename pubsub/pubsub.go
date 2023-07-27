@@ -1,8 +1,10 @@
 package pubsub
 
 import (
-	"cloud.google.com/go/firestore"
 	"context"
+	"sync"
+
+	"cloud.google.com/go/firestore"
 	watermillFirestore "github.com/ThreeDotsLabs/watermill-firestore/pkg/firestore"
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -14,7 +16,7 @@ import (
 )
 
 var DefaultWireset = wire.NewSet(
-	NewFacade,
+	NewPubsub,
 	NewHandlerRegistry,
 	router.DefaultWireset,
 )
@@ -40,6 +42,7 @@ func (f *Pubsub) Publish(ctx context.Context, evt interface{}) error {
 }
 
 type Pubsub struct {
+	mu              sync.Mutex
 	facade          *cqrs.Facade
 	registry        *HandlerRegistry
 	logger          *zap.Logger
@@ -48,7 +51,7 @@ type Pubsub struct {
 }
 
 // NewFacade creates a new Pubsub.
-func NewFacade(
+func NewPubsub(
 	zapLogger *zap.Logger,
 	router *message.Router,
 	registry *HandlerRegistry,
@@ -56,6 +59,7 @@ func NewFacade(
 ) (*Pubsub, error) {
 	logger := zapLogger.With(zap.Strings("tags", []string{"Pubsub"}))
 	facade := &Pubsub{
+		mu:              sync.Mutex{},
 		facade:          nil,
 		registry:        registry,
 		logger:          logger,
@@ -77,6 +81,8 @@ func (f *Pubsub) Register() error {
 
 // getFacade returns a facade.
 func (f *Pubsub) getFacade() (*cqrs.Facade, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if f.facade != nil {
 		return f.facade, nil
 	}
