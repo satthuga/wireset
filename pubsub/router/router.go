@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/aiocean/wireset/configsvc"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -16,6 +17,7 @@ var DefaultWireset = wire.NewSet(
 
 func NewRouter(
 	logSvc *zap.Logger,
+	cfg *configsvc.ConfigService,
 ) (*message.Router, func(), error) {
 	logger := logSvc.With(zap.Strings("tags", []string{"Router"}))
 	waterLogger := watermillzap.NewLogger(logger)
@@ -34,7 +36,7 @@ func NewRouter(
 			Logger:          waterLogger,
 			OnFailed: func(msg *message.Message, err error) ([]*message.Message, error) {
 				// save event to collection
-
+				logger.Error("Router: error handling message", zap.Error(err))
 				return nil, nil
 			},
 		}.Middleware,

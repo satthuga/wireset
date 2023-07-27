@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"context"
+	"github.com/aiocean/wireset/configsvc"
 	"sync"
 
 	"cloud.google.com/go/firestore"
@@ -47,6 +48,7 @@ type Pubsub struct {
 	registry        *HandlerRegistry
 	logger          *zap.Logger
 	router          *message.Router
+	cfg             *configsvc.ConfigService
 	firestoreClient *firestore.Client
 }
 
@@ -56,6 +58,7 @@ func NewPubsub(
 	router *message.Router,
 	registry *HandlerRegistry,
 	firestoreClient *firestore.Client,
+	cfg *configsvc.ConfigService,
 ) (*Pubsub, error) {
 	logger := zapLogger.With(zap.Strings("tags", []string{"Pubsub"}))
 	facade := &Pubsub{
@@ -65,6 +68,7 @@ func NewPubsub(
 		logger:          logger,
 		router:          router,
 		firestoreClient: firestoreClient,
+		cfg:             cfg,
 	}
 	return facade, nil
 }
@@ -134,11 +138,11 @@ func (f *Pubsub) commandSubscriberConstructor() cqrs.CommandsSubscriberConstruct
 		return watermillFirestore.NewSubscriber(
 			watermillFirestore.SubscriberConfig{
 				GenerateSubscriptionName: func(topic string) string {
-					return topic
+					return topic + "--cmd--" + f.cfg.Environment
 				},
 				CustomFirestoreClient: f.firestoreClient,
 			},
-			watermillzap.NewLogger(f.logger.Named("command-subscriber")),
+			watermillzap.NewLogger(f.logger.Named("event-subscriber--"+topic)),
 		)
 	}
 }
@@ -149,11 +153,11 @@ func (f *Pubsub) eventSubscriberConstructor() cqrs.EventsSubscriberConstructor {
 		return watermillFirestore.NewSubscriber(
 			watermillFirestore.SubscriberConfig{
 				GenerateSubscriptionName: func(topic string) string {
-					return topic
+					return topic + "--evt--" + f.cfg.Environment
 				},
 				CustomFirestoreClient: f.firestoreClient,
 			},
-			watermillzap.NewLogger(f.logger.Named("event-subscriber")),
+			watermillzap.NewLogger(f.logger.Named("event-subscriber--"+topic)),
 		)
 	}
 }
