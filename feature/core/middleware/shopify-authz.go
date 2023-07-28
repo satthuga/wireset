@@ -34,7 +34,7 @@ func NewAuthzController(
 	logger *zap.Logger,
 	cacheSvc *cachesvc.CacheService,
 ) *ShopifyAuthzMiddleware {
-	localLogger := logger.With(zap.Strings("tags", []string{"ShopifyAuthzMiddleware"}))
+	localLogger := logger.Named("shopifyAuthzMiddleware")
 	controller := &ShopifyAuthzMiddleware{
 		logger:          localLogger,
 		configService:   configSvc,
