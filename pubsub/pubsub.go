@@ -41,7 +41,7 @@ func NewPubsub(
 	subscriber *redisstream.Subscriber,
 	publisher *redisstream.Publisher,
 ) (*Pubsub, error) {
-	logger := zapLogger.With(zap.Strings("tags", []string{"Pubsub"}))
+	logger := zapLogger.Named("pubsub")
 	facade := &Pubsub{
 		mu:         sync.Mutex{},
 		facade:     nil,
