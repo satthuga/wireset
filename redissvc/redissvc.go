@@ -5,8 +5,11 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/garsue/watermillzap"
 	"github.com/google/wire"
+	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+	"os"
+	"strconv"
 )
 
 var DefaultWireset = wire.NewSet(
@@ -17,18 +20,44 @@ var DefaultWireset = wire.NewSet(
 	wire.NewSet(new(redisstream.Publisher), new(message.Publisher)),
 )
 
+func RedisConfigFromEnv() (*redis.Options, error) {
+	addr, ok := os.LookupEnv("REDIS_ADDRESS")
+	if !ok {
+		return nil, errors.New("REDIS_ADDR is not set")
+	}
+
+	username, ok := os.LookupEnv("REDIS_USERNAME")
+	if !ok {
+		return nil, errors.New("REDIS_USERNAME is not set")
+	}
+
+	password, ok := os.LookupEnv("REDIS_PASSWORD")
+	if !ok {
+		return nil, errors.New("REDIS_PASSWORD is not set")
+	}
+
+	redisDb, ok := os.LookupEnv("REDIS_DB")
+	if !ok {
+		return nil, errors.New("REDIS_DB is not set")
+	}
+	redisDbNumber, err := strconv.Atoi(redisDb)
+	if err != nil {
+		return nil, errors.Wrap(err, "REDIS_DB is not a number")
+	}
+
+	return &redis.Options{
+		Addr:     addr,
+		Username: username,
+		Password: password,
+		DB:       redisDbNumber,
+	}, nil
+}
 func NewRedisClient(
 	logSvc *zap.Logger,
+	config *redis.Options,
 ) (*redis.Client, func(), error) {
-
 	logger := logSvc.With(zap.Strings("tags", []string{"redis-client"}))
-
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "containers-us-west-78.railway.app:5482",
-		Username: "default",
-		Password: "NtSp7hZLEfC7fYUp2D7f",
-		DB:       0,
-	})
+	redisClient := redis.NewClient(config)
 
 	cleanup := func() {
 		logger.Info("Router: Cleaning up")
