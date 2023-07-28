@@ -7,6 +7,7 @@ require (
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/ThreeDotsLabs/watermill v1.2.0
 	github.com/ThreeDotsLabs/watermill-firestore v0.2.4
+	github.com/ThreeDotsLabs/watermill-redisstream v1.2.1
 	github.com/alitto/pond v1.8.3
 	github.com/bold-commerce/go-shopify/v3 v3.14.0
 	github.com/casbin/casbin/v2 v2.72.1
@@ -22,6 +23,7 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.15.1
+	github.com/redis/go-redis/v9 v9.0.5
 	github.com/tidwall/gjson v1.14.4
 	go.uber.org/zap v1.24.0
 	google.golang.org/api v0.125.0
@@ -45,9 +47,11 @@ require (
 	github.com/DataDog/sketches-go v1.4.2 // indirect
 	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/Rican7/retry v0.3.1 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fasthttp/websocket v1.5.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -86,6 +90,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.48.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
+	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect

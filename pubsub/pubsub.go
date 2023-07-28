@@ -2,11 +2,10 @@ package pubsub
 
 import (
 	"context"
+	"github.com/ThreeDotsLabs/watermill-redisstream/pkg/redisstream"
 	"github.com/aiocean/wireset/configsvc"
 	"sync"
 
-	"cloud.google.com/go/firestore"
-	watermillFirestore "github.com/ThreeDotsLabs/watermill-firestore/pkg/firestore"
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/aiocean/wireset/pubsub/router"
@@ -21,6 +20,41 @@ var DefaultWireset = wire.NewSet(
 	NewHandlerRegistry,
 	router.DefaultWireset,
 )
+
+type Pubsub struct {
+	mu         sync.Mutex
+	facade     *cqrs.Facade
+	registry   *HandlerRegistry
+	logger     *zap.Logger
+	router     *message.Router
+	cfg        *configsvc.ConfigService
+	subscriber message.Subscriber
+	publisher  message.Publisher
+}
+
+// NewPubsub NewFacade creates a new Pubsub.
+func NewPubsub(
+	zapLogger *zap.Logger,
+	router *message.Router,
+	registry *HandlerRegistry,
+	cfg *configsvc.ConfigService,
+	subscriber *redisstream.Subscriber,
+	publisher *redisstream.Publisher,
+) (*Pubsub, error) {
+	logger := zapLogger.With(zap.Strings("tags", []string{"Pubsub"}))
+	facade := &Pubsub{
+		mu:         sync.Mutex{},
+		facade:     nil,
+		registry:   registry,
+		logger:     logger,
+		router:     router,
+		cfg:        cfg,
+		subscriber: subscriber,
+		publisher:  publisher,
+	}
+
+	return facade, nil
+}
 
 // Send publishes a message to the given topic.
 func (f *Pubsub) Send(ctx context.Context, cmd interface{}) error {
@@ -40,37 +74,6 @@ func (f *Pubsub) Publish(ctx context.Context, evt interface{}) error {
 	}
 
 	return facade.EventBus().Publish(ctx, evt)
-}
-
-type Pubsub struct {
-	mu              sync.Mutex
-	facade          *cqrs.Facade
-	registry        *HandlerRegistry
-	logger          *zap.Logger
-	router          *message.Router
-	cfg             *configsvc.ConfigService
-	firestoreClient *firestore.Client
-}
-
-// NewFacade creates a new Pubsub.
-func NewPubsub(
-	zapLogger *zap.Logger,
-	router *message.Router,
-	registry *HandlerRegistry,
-	firestoreClient *firestore.Client,
-	cfg *configsvc.ConfigService,
-) (*Pubsub, error) {
-	logger := zapLogger.With(zap.Strings("tags", []string{"Pubsub"}))
-	facade := &Pubsub{
-		mu:              sync.Mutex{},
-		facade:          nil,
-		registry:        registry,
-		logger:          logger,
-		router:          router,
-		firestoreClient: firestoreClient,
-		cfg:             cfg,
-	}
-	return facade, nil
 }
 
 // Register
@@ -101,78 +104,7 @@ func (f *Pubsub) getFacade() (*cqrs.Facade, error) {
 	return f.facade, nil
 }
 
-// publisherConstructor returns a publisher constructor.
-func (f *Pubsub) createEventPublisher() (message.Publisher, error) {
-	eventsPublisher, err := watermillFirestore.NewPublisher(
-		watermillFirestore.PublisherConfig{
-			CustomFirestoreClient: f.firestoreClient,
-		},
-		watermillzap.NewLogger(f.logger.Named("event-publisher")),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return eventsPublisher, nil
-}
-
-// createCommandSender returns a command sender.
-func (f *Pubsub) commandSenderConstructor() (message.Publisher, error) {
-
-	commandsPublisher, err := watermillFirestore.NewPublisher(
-		watermillFirestore.PublisherConfig{
-			CustomFirestoreClient: f.firestoreClient,
-		},
-		watermillzap.NewLogger(f.logger.Named("command-sender")),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return commandsPublisher, nil
-}
-
-// commandSubscriberConstructor returns a command subscriber.
-func (f *Pubsub) commandSubscriberConstructor() cqrs.CommandsSubscriberConstructor {
-	return func(topic string) (message.Subscriber, error) {
-		return watermillFirestore.NewSubscriber(
-			watermillFirestore.SubscriberConfig{
-				GenerateSubscriptionName: func(topic string) string {
-					return topic + "--cmd--" + f.cfg.Environment
-				},
-				CustomFirestoreClient: f.firestoreClient,
-			},
-			watermillzap.NewLogger(f.logger.Named("event-subscriber--"+topic)),
-		)
-	}
-}
-
-// eventSubscriberConstructor returns an event subscriber.
-func (f *Pubsub) eventSubscriberConstructor() cqrs.EventsSubscriberConstructor {
-	return func(topic string) (message.Subscriber, error) {
-		return watermillFirestore.NewSubscriber(
-			watermillFirestore.SubscriberConfig{
-				GenerateSubscriptionName: func(topic string) string {
-					return topic + "--evt--" + f.cfg.Environment
-				},
-				CustomFirestoreClient: f.firestoreClient,
-			},
-			watermillzap.NewLogger(f.logger.Named("event-subscriber--"+topic)),
-		)
-	}
-}
-
 func (f *Pubsub) createFacade() (*cqrs.Facade, error) {
-	eventsPublisher, err := f.createEventPublisher()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create event publisher")
-	}
-
-	commandsSender, err := f.commandSenderConstructor()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create command sender")
-	}
-
 	cqrsFacade, err := cqrs.NewFacade(cqrs.FacadeConfig{
 		GenerateCommandsTopic: func(commandName string) string {
 			return commandName
@@ -180,15 +112,19 @@ func (f *Pubsub) createFacade() (*cqrs.Facade, error) {
 		GenerateEventsTopic: func(eventName string) string {
 			return eventName
 		},
-		CommandsSubscriberConstructor: f.commandSubscriberConstructor(),
-		EventsSubscriberConstructor:   f.eventSubscriberConstructor(),
-		CommandEventMarshaler:         cqrs.JSONMarshaler{},
-		CommandsPublisher:             commandsSender,
-		EventsPublisher:               eventsPublisher,
-		Router:                        f.router,
-		Logger:                        watermillzap.NewLogger(f.logger.Named("cqrsFacade")),
-		CommandHandlers:               f.registry.GetCommandHandlerFactory(),
-		EventHandlers:                 f.registry.GetEventHandlerFactory(),
+		CommandsSubscriberConstructor: func(topic string) (message.Subscriber, error) {
+			return f.subscriber, nil
+		},
+		EventsSubscriberConstructor: func(topic string) (message.Subscriber, error) {
+			return f.subscriber, nil
+		},
+		CommandEventMarshaler: cqrs.JSONMarshaler{},
+		CommandsPublisher:     f.publisher,
+		EventsPublisher:       f.publisher,
+		Router:                f.router,
+		Logger:                watermillzap.NewLogger(f.logger.Named("cqrsFacade")),
+		CommandHandlers:       f.registry.GetCommandHandlerFactory(),
+		EventHandlers:         f.registry.GetEventHandlerFactory(),
 	})
 
 	if err != nil {
