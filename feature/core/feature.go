@@ -35,7 +35,7 @@ type FeatureCore struct {
 	ShopInstalledEvtHandler *event.CreateUserHandler
 	WelcomeEvtHandler       *event.WelcomeHandler
 
-	authzMiddleware *middleware.ShopifyAuthzMiddleware
+	AuthzMiddleware *middleware.ShopifyAuthzMiddleware
 
 	AuthHandler      *handler.AuthHandler
 	WebhookHandler   *handler.WebhookHandler
@@ -54,43 +54,43 @@ func (f *FeatureCore) Init() error {
 	f.PubsubRegistry.AddEventHandler(f.WelcomeEvtHandler)
 
 	f.HttpRegistry.AddHttpMiddleware("/ws", f.WebsocketHandler.CheckUpgrade)
-	f.HttpRegistry.AddHttpMiddleware("/", f.authzMiddleware.Handle)
+	f.HttpRegistry.AddHttpMiddleware("/", f.AuthzMiddleware.Handle)
 
 	f.HttpRegistry.AddHttpHandlers([]*fiberapp.HttpHandler{
 		{
-			Method:  fiber.MethodGet,
-			Path:    "/auth/shopify/login-callback",
-			Handler: f.AuthHandler.LoginCallback,
+			Method:   fiber.MethodGet,
+			Path:     "/auth/shopify/login-callback",
+			Handlers: []fiber.Handler{f.AuthHandler.LoginCallback},
 		},
 		{
-			Method:  fiber.MethodGet,
-			Path:    "/auth/shopify/checkin",
-			Handler: f.AuthHandler.Checkin,
+			Method:   fiber.MethodGet,
+			Path:     "/auth/shopify/checkin",
+			Handlers: []fiber.Handler{f.AuthHandler.Checkin},
 		},
 		{
-			Method:  fiber.MethodGet,
-			Path:    "/webhook/shopify/app-uninstalled",
-			Handler: f.WebhookHandler.Uninstalled,
+			Method:   fiber.MethodGet,
+			Path:     "/webhook/shopify/app-uninstalled",
+			Handlers: []fiber.Handler{f.WebhookHandler.Uninstalled},
 		},
 		{
-			Method:  fiber.MethodGet,
-			Path:    "/ws/:id",
-			Handler: websocket.New(f.WebsocketHandler.Handle),
+			Method:   fiber.MethodGet,
+			Path:     "/ws/:id",
+			Handlers: []fiber.Handler{websocket.New(f.WebsocketHandler.Handle)},
 		},
 		{
-			Method:  fiber.MethodPost,
-			Path:    "/gdpr/customers/data_request",
-			Handler: f.GdprHandler.CustomerDataRequest,
+			Method:   fiber.MethodPost,
+			Path:     "/gdpr/customers/data_request",
+			Handlers: []fiber.Handler{f.GdprHandler.CustomerDataRequest},
 		},
 		{
-			Method:  fiber.MethodPost,
-			Path:    "/gdpr/customers/redact",
-			Handler: f.GdprHandler.CustomerRedact,
+			Method:   fiber.MethodPost,
+			Path:     "/gdpr/customers/redact",
+			Handlers: []fiber.Handler{f.GdprHandler.CustomerRedact},
 		},
 		{
-			Method:  fiber.MethodPost,
-			Path:    "/gdpr/shop/redact",
-			Handler: f.GdprHandler.ShopRedact,
+			Method:   fiber.MethodPost,
+			Path:     "/gdpr/shop/redact",
+			Handlers: []fiber.Handler{f.GdprHandler.ShopRedact},
 		},
 	})
 	return nil

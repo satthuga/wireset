@@ -22,7 +22,7 @@ func (s *WebsocketHandler) CheckUpgrade(c *fiber.Ctx) error {
 		return c.Next()
 	}
 
-	return c.JSON(map[string]interface{}{
+	return c.JSON(map[string]string{
 		"token": "df",
 	})
 }
