@@ -2,6 +2,7 @@ package fiberapp
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/aiocean/wireset/configsvc"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
@@ -37,7 +38,8 @@ func NewFiberApp(
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 
-			if e, ok := err.(*fiber.Error); ok {
+			var e *fiber.Error
+			if errors.As(err, &e) {
 				code = e.Code
 			}
 
