@@ -6,7 +6,6 @@ require (
 	cloud.google.com/go/firestore v1.10.0
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/ThreeDotsLabs/watermill v1.2.0
-	github.com/ThreeDotsLabs/watermill-firestore v0.2.4
 	github.com/ThreeDotsLabs/watermill-redisstream v1.2.1
 	github.com/alitto/pond v1.8.3
 	github.com/bold-commerce/go-shopify/v3 v3.14.0
@@ -25,7 +24,7 @@ require (
 	github.com/prometheus/client_golang v1.15.1
 	github.com/redis/go-redis/v9 v9.0.5
 	github.com/tidwall/gjson v1.14.4
-	go.uber.org/zap v1.24.0
+	go.uber.org/zap v1.26.0
 	google.golang.org/api v0.125.0
 	google.golang.org/grpc v1.55.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.51.0
