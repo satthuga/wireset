@@ -10,7 +10,6 @@ import (
 type ConfigService struct {
 	ServiceName         string
 	ServiceUrl          string
-	AppUrl              string
 	Address             string
 	Port                string
 	Environment         string
@@ -29,7 +28,6 @@ func NewConfigFromEnv() (*ConfigService, error) {
 	configService := &ConfigService{
 		ServiceName: os.Getenv("SERVICE_NAME"),
 		ServiceUrl:  os.Getenv("SERVICE_URL"),
-		AppUrl:      os.Getenv("APP_URL"),
 		Environment: os.Getenv("ENVIRONMENT"),
 	}
 
@@ -49,12 +47,6 @@ func NewConfigFromEnv() (*ConfigService, error) {
 		configService.ServiceUrl = value
 	} else {
 		return nil, errors.New("SERVICE_URL is required")
-	}
-
-	if value, ok := os.LookupEnv("APP_URL"); ok {
-		configService.AppUrl = value
-	} else {
-		return nil, errors.New("APP_URL is required")
 	}
 
 	if value, ok := os.LookupEnv("ADDRESS"); ok {

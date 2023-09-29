@@ -106,6 +106,13 @@ func (s *ShopifyAuthzMiddleware) Handle(c *fiber.Ctx) error {
 		})
 	}
 
+	if shop == nil {
+		return c.Status(http.StatusUnauthorized).JSON(model.AuthResponse{
+			Message:           "Unauthorized: " + err.Error(),
+			AuthenticationUrl: authUrl,
+		})
+	}
+
 	shopifyToken, err := s.tokenRepository.GetToken(c.UserContext(), shop.ID)
 	if err != nil {
 		return c.Status(http.StatusUnauthorized).JSON(model.AuthResponse{

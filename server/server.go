@@ -69,6 +69,7 @@ func (s *Server) Start(ctx context.Context) chan error {
 			port = "8080"
 		}
 
+		s.HttpHandlerRegistry.RegisterMiddlewares(s.FiberSvc)
 		s.HttpHandlerRegistry.RegisterHandlers(s.FiberSvc)
 
 		if err := s.FiberSvc.Listen(":" + port); err != nil {

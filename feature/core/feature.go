@@ -8,7 +8,6 @@ import (
 	"github.com/aiocean/wireset/fiberapp"
 	"github.com/aiocean/wireset/pubsub"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/websocket/v2"
 	"github.com/google/wire"
 )
 
@@ -24,7 +23,6 @@ var DefaultWireset = wire.NewSet(
 
 	wire.Struct(new(handler.AuthHandler), "*"),
 	wire.Struct(new(handler.WebhookHandler), "*"),
-	handler.NewWebsocketHandler,
 	wire.Struct(new(handler.GdprHandler), "*"),
 )
 
@@ -37,10 +35,9 @@ type FeatureCore struct {
 
 	AuthzMiddleware *middleware.ShopifyAuthzMiddleware
 
-	AuthHandler      *handler.AuthHandler
-	WebhookHandler   *handler.WebhookHandler
-	WebsocketHandler *handler.WebsocketHandler
-	GdprHandler      *handler.GdprHandler
+	AuthHandler    *handler.AuthHandler
+	WebhookHandler *handler.WebhookHandler
+	GdprHandler    *handler.GdprHandler
 
 	PubsubRegistry *pubsub.HandlerRegistry
 	HttpRegistry   *fiberapp.Registry
@@ -53,7 +50,6 @@ func (f *FeatureCore) Init() error {
 	f.PubsubRegistry.AddEventHandler(f.ShopInstalledEvtHandler)
 	f.PubsubRegistry.AddEventHandler(f.WelcomeEvtHandler)
 
-	f.HttpRegistry.AddHttpMiddleware("/ws", f.WebsocketHandler.CheckUpgrade)
 	f.HttpRegistry.AddHttpMiddleware("/", f.AuthzMiddleware.Handle)
 
 	f.HttpRegistry.AddHttpHandlers([]*fiberapp.HttpHandler{
@@ -71,11 +67,6 @@ func (f *FeatureCore) Init() error {
 			Method:   fiber.MethodGet,
 			Path:     "/webhook/shopify/app-uninstalled",
 			Handlers: []fiber.Handler{f.WebhookHandler.Uninstalled},
-		},
-		{
-			Method:   fiber.MethodGet,
-			Path:     "/ws/:id",
-			Handlers: []fiber.Handler{websocket.New(f.WebsocketHandler.Handle)},
 		},
 		{
 			Method:   fiber.MethodPost,

@@ -11,13 +11,13 @@ type HttpHandler struct {
 
 type Registry struct {
 	HttpHandlers    map[string]*HttpHandler
-	HttpMiddlewares [][]interface{}
+	HttpMiddlewares map[string]interface{}
 }
 
 func NewRegistry() *Registry {
 	return &Registry{
 		HttpHandlers:    map[string]*HttpHandler{},
-		HttpMiddlewares: [][]interface{}{},
+		HttpMiddlewares: map[string]interface{}{},
 	}
 }
 
@@ -28,7 +28,7 @@ func (r *Registry) AddHttpHandlers(handlers []*HttpHandler) {
 }
 
 func (r *Registry) AddHttpMiddleware(path string, handler interface{}) {
-	r.HttpMiddlewares = append(r.HttpMiddlewares, []interface{}{path, handler})
+	r.HttpMiddlewares[path] = handler
 }
 
 func (r *Registry) GetHttpHandler(method, path string) *HttpHandler {
@@ -43,5 +43,11 @@ func createHandlerID(method, path string) string {
 func (r *Registry) RegisterHandlers(app *fiber.App) {
 	for _, handler := range r.HttpHandlers {
 		app.Add(handler.Method, handler.Path, handler.Handlers...)
+	}
+}
+
+func (r *Registry) RegisterMiddlewares(app *fiber.App) {
+	for path, middleware := range r.HttpMiddlewares {
+		app.Use(path, middleware)
 	}
 }
