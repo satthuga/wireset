@@ -4,13 +4,12 @@ import (
 	"context"
 	"github.com/aiocean/wireset/configsvc"
 	"github.com/aiocean/wireset/fiberapp"
-	"github.com/aiocean/wireset/pubsub"
 	"github.com/aiocean/wireset/tracersvc"
+	fiber "github.com/gofiber/fiber/v2"
 	"github.com/pkg/errors"
 	"os"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/gofiber/fiber/v2"
 	"github.com/google/wire"
 	"go.uber.org/zap"
 )
@@ -22,7 +21,6 @@ type Server struct {
 	LogSvc              *zap.Logger
 	FiberSvc            *fiber.App
 	HttpHandlerRegistry *fiberapp.Registry
-	EventBus            *pubsub.Pubsub
 	Features            []Feature
 }
 
@@ -43,12 +41,6 @@ func (s *Server) Start(ctx context.Context) chan error {
 			errChan <- errors.WithMessage(err, "failed to init feature")
 			return errChan
 		}
-	}
-
-	// Register event bus
-	if err := s.EventBus.Register(); err != nil {
-		errChan <- errors.WithMessage(err, "failed to register event bus")
-		return errChan
 	}
 
 	// start message router

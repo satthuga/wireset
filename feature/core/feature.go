@@ -1,13 +1,12 @@
 package core
 
 import (
+	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/aiocean/wireset/feature/core/command"
 	"github.com/aiocean/wireset/feature/core/event"
 	"github.com/aiocean/wireset/feature/core/handler"
 	"github.com/aiocean/wireset/feature/core/middleware"
 	"github.com/aiocean/wireset/fiberapp"
-	"github.com/aiocean/wireset/pubsub"
-	"github.com/gofiber/fiber/v2"
 	"github.com/google/wire"
 )
 
@@ -39,16 +38,17 @@ type FeatureCore struct {
 	WebhookHandler *handler.WebhookHandler
 	GdprHandler    *handler.GdprHandler
 
-	PubsubRegistry *pubsub.HandlerRegistry
-	HttpRegistry   *fiberapp.Registry
+	EventProcessor   *cqrs.EventProcessor
+	CommandProcessor *cqrs.CommandProcessor
+	HttpRegistry     *fiberapp.Registry
 }
 
 func (f *FeatureCore) Init() error {
-	f.PubsubRegistry.AddCommandHandler(f.InstallWebhookCmdHandler)
-	f.PubsubRegistry.AddCommandHandler(f.SetShopStateCmdHandler)
+	f.CommandProcessor.AddHandlers(f.InstallWebhookCmdHandler)
+	f.CommandProcessor.AddHandlers(f.SetShopStateCmdHandler)
 
-	f.PubsubRegistry.AddEventHandler(f.ShopInstalledEvtHandler)
-	f.PubsubRegistry.AddEventHandler(f.WelcomeEvtHandler)
+	f.EventProcessor.AddHandlers(f.ShopInstalledEvtHandler)
+	f.EventProcessor.AddHandlers(f.WelcomeEvtHandler)
 
 	f.HttpRegistry.AddHttpMiddleware("/", f.AuthzMiddleware.Handle)
 

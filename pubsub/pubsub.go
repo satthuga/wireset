@@ -2,29 +2,24 @@ package pubsub
 
 import (
 	"github.com/ThreeDotsLabs/watermill-redisstream/pkg/redisstream"
-	"github.com/aiocean/wireset/configsvc"
 	"github.com/redis/go-redis/v9"
-	"sync"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/aiocean/wireset/pubsub/router"
 	"github.com/garsue/watermillzap"
 	"github.com/google/wire"
 	"go.uber.org/zap"
 )
 
 var DefaultWireset = wire.NewSet(
-	NewPubsub,
 	NewCommandProcessor,
-	NewEventGroupProcessor,
+	NewEventProcessor,
 	NewCommandBus,
 	NewEventBus,
-	NewHandlerRegistry,
-	router.DefaultWireset,
 	NewRedisSubscriber,
 	NewRedisPublisher,
+	NewRouter,
 	wire.Bind(new(message.Subscriber), new(*redisstream.Subscriber)),
 	wire.Bind(new(message.Publisher), new(*redisstream.Publisher)),
 )
@@ -80,34 +75,6 @@ func NewRedisPublisher(pubClient *redis.Client, logger *zap.Logger) (*redisstrea
 	return publisher, cleanup, nil
 }
 
-type Pubsub struct {
-	mu       sync.Mutex
-	registry *HandlerRegistry
-	logger   *zap.Logger
-	cfg      *configsvc.ConfigService
-}
-
-// NewPubsub NewFacade creates a new Pubsub.
-func NewPubsub(
-	zapLogger *zap.Logger,
-	registry *HandlerRegistry,
-	cfg *configsvc.ConfigService,
-	// force create processor
-	commandProcessor *cqrs.CommandProcessor,
-	eventProcessor *cqrs.EventGroupProcessor,
-) (*Pubsub, error) {
-	logger := zapLogger.Named("pubsub")
-
-	facade := &Pubsub{
-		mu:       sync.Mutex{},
-		registry: registry,
-		logger:   logger,
-		cfg:      cfg,
-	}
-
-	return facade, nil
-}
-
 // NewCommandBus creates a new command bus.
 func NewCommandBus(publisher message.Publisher, logger *zap.Logger) (*cqrs.CommandBus, error) {
 	commandBus, err := cqrs.NewCommandBusWithConfig(publisher, cqrs.CommandBusConfig{
@@ -142,18 +109,18 @@ func NewEventBus(publisher message.Publisher, logger *zap.Logger) (*cqrs.EventBu
 	return eventBus, err
 }
 
-func NewEventGroupProcessor(router *message.Router, subscriber message.Subscriber, logger *zap.Logger) (*cqrs.EventGroupProcessor, error) {
-	return cqrs.NewEventGroupProcessorWithConfig(
+func NewEventProcessor(router *message.Router, subscriber message.Subscriber, logger *zap.Logger) (*cqrs.EventProcessor, error) {
+	return cqrs.NewEventProcessorWithConfig(
 		router,
-		cqrs.EventGroupProcessorConfig{
-			GenerateSubscribeTopic: func(params cqrs.EventGroupProcessorGenerateSubscribeTopicParams) (string, error) {
-				return params.EventGroupName, nil
+		cqrs.EventProcessorConfig{
+			GenerateSubscribeTopic: func(params cqrs.EventProcessorGenerateSubscribeTopicParams) (string, error) {
+				return params.EventName, nil
 			},
-			SubscriberConstructor: func(params cqrs.EventGroupProcessorSubscriberConstructorParams) (message.Subscriber, error) {
+			SubscriberConstructor: func(params cqrs.EventProcessorSubscriberConstructorParams) (message.Subscriber, error) {
 				return subscriber, nil
 			},
 
-			OnHandle: func(params cqrs.EventGroupProcessorOnHandleParams) error {
+			OnHandle: func(params cqrs.EventProcessorOnHandleParams) error {
 				err := params.Handler.Handle(params.Message.Context(), params.Event)
 				return err
 			},

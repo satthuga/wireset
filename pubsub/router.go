@@ -1,4 +1,4 @@
-package router
+package pubsub
 
 import (
 	"github.com/aiocean/wireset/configsvc"
@@ -7,12 +7,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 	"github.com/garsue/watermillzap"
-	"github.com/google/wire"
 	"go.uber.org/zap"
-)
-
-var DefaultWireset = wire.NewSet(
-	NewRouter,
 )
 
 func NewRouter(

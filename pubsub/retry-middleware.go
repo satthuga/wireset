@@ -1,4 +1,4 @@
-package router
+package pubsub
 
 import (
 	"context"
