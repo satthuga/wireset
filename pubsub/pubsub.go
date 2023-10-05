@@ -1,135 +1,188 @@
 package pubsub
 
 import (
-	"context"
 	"github.com/ThreeDotsLabs/watermill-redisstream/pkg/redisstream"
 	"github.com/aiocean/wireset/configsvc"
+	"github.com/redis/go-redis/v9"
 	"sync"
+	"time"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/aiocean/wireset/pubsub/router"
 	"github.com/garsue/watermillzap"
 	"github.com/google/wire"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
 var DefaultWireset = wire.NewSet(
 	NewPubsub,
+	NewCommandProcessor,
+	NewEventGroupProcessor,
+	NewCommandBus,
+	NewEventBus,
 	NewHandlerRegistry,
 	router.DefaultWireset,
+	NewRedisSubscriber,
+	NewRedisPublisher,
+	wire.Bind(new(message.Subscriber), new(*redisstream.Subscriber)),
+	wire.Bind(new(message.Publisher), new(*redisstream.Publisher)),
 )
 
+func NewRedisSubscriber(subClient *redis.Client, logger *zap.Logger) (*redisstream.Subscriber, func(), error) {
+	subscriber, err := redisstream.NewSubscriber(
+		redisstream.SubscriberConfig{
+			Client:        subClient,
+			Unmarshaller:  redisstream.DefaultMarshallerUnmarshaller{},
+			ConsumerGroup: "test_consumer_group",
+		},
+		watermillzap.NewLogger(logger.Named("subscriber")),
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cleanup := func() {
+		logger.Info("Router: Cleaning up")
+		if err := subscriber.Close(); err != nil {
+			logger.Error("Router: error closing router", zap.Error(err))
+			return
+		}
+		logger.Info("Router: router closed")
+	}
+
+	return subscriber, cleanup, nil
+}
+
+func NewRedisPublisher(pubClient *redis.Client, logger *zap.Logger) (*redisstream.Publisher, func(), error) {
+	publisher, err := redisstream.NewPublisher(
+		redisstream.PublisherConfig{
+			Client:     pubClient,
+			Marshaller: redisstream.DefaultMarshallerUnmarshaller{},
+		},
+		watermillzap.NewLogger(logger.Named("publisher")),
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cleanup := func() {
+		logger.Info("Router: Cleaning up")
+		if err := publisher.Close(); err != nil {
+			logger.Error("Router: error closing router", zap.Error(err))
+			return
+		}
+		logger.Info("Router: router closed")
+	}
+
+	return publisher, cleanup, nil
+}
+
 type Pubsub struct {
-	mu         sync.Mutex
-	facade     *cqrs.Facade
-	registry   *HandlerRegistry
-	logger     *zap.Logger
-	router     *message.Router
-	cfg        *configsvc.ConfigService
-	subscriber message.Subscriber
-	publisher  message.Publisher
+	mu       sync.Mutex
+	registry *HandlerRegistry
+	logger   *zap.Logger
+	cfg      *configsvc.ConfigService
 }
 
 // NewPubsub NewFacade creates a new Pubsub.
 func NewPubsub(
 	zapLogger *zap.Logger,
-	router *message.Router,
 	registry *HandlerRegistry,
 	cfg *configsvc.ConfigService,
-	subscriber *redisstream.Subscriber,
-	publisher *redisstream.Publisher,
+	// force create processor
+	commandProcessor *cqrs.CommandProcessor,
+	eventProcessor *cqrs.EventGroupProcessor,
 ) (*Pubsub, error) {
 	logger := zapLogger.Named("pubsub")
+
 	facade := &Pubsub{
-		mu:         sync.Mutex{},
-		facade:     nil,
-		registry:   registry,
-		logger:     logger,
-		router:     router,
-		cfg:        cfg,
-		subscriber: subscriber,
-		publisher:  publisher,
+		mu:       sync.Mutex{},
+		registry: registry,
+		logger:   logger,
+		cfg:      cfg,
 	}
 
 	return facade, nil
 }
 
-// Send publishes a message to the given topic.
-func (f *Pubsub) Send(ctx context.Context, cmd interface{}) error {
-	facade, err := f.getFacade()
-	if err != nil {
-		return err
-	}
-
-	return facade.CommandBus().Send(ctx, cmd)
-}
-
-// Publish triggers a message to the given topic.
-func (f *Pubsub) Publish(ctx context.Context, evt interface{}) error {
-	facade, err := f.getFacade()
-	if err != nil {
-		return err
-	}
-
-	return facade.EventBus().Publish(ctx, evt)
-}
-
-// Register
-func (f *Pubsub) Register() error {
-	_, err := f.getFacade()
-	if err != nil {
-		return errors.WithMessage(err, "failed to get pubsub")
-	}
-
-	return nil
-}
-
-// getFacade returns a facade.
-func (f *Pubsub) getFacade() (*cqrs.Facade, error) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	if f.facade != nil {
-		return f.facade, nil
-	}
-
-	facade, err := f.createFacade()
-	if err != nil {
-		return nil, errors.WithMessage(err, "failed to create pubsub")
-	}
-
-	f.facade = facade
-
-	return f.facade, nil
-}
-
-func (f *Pubsub) createFacade() (*cqrs.Facade, error) {
-	cqrsFacade, err := cqrs.NewFacade(cqrs.FacadeConfig{
-		GenerateCommandsTopic: func(commandName string) string {
-			return commandName
+// NewCommandBus creates a new command bus.
+func NewCommandBus(publisher message.Publisher, logger *zap.Logger) (*cqrs.CommandBus, error) {
+	commandBus, err := cqrs.NewCommandBusWithConfig(publisher, cqrs.CommandBusConfig{
+		GeneratePublishTopic: func(params cqrs.CommandBusGeneratePublishTopicParams) (string, error) {
+			return params.CommandName, nil
 		},
-		GenerateEventsTopic: func(eventName string) string {
-			return eventName
+		OnSend: func(params cqrs.CommandBusOnSendParams) error {
+			params.Message.Metadata.Set("sent_at", time.Now().String())
+			return nil
 		},
-		CommandsSubscriberConstructor: func(topic string) (message.Subscriber, error) {
-			return f.subscriber, nil
-		},
-		EventsSubscriberConstructor: func(topic string) (message.Subscriber, error) {
-			return f.subscriber, nil
-		},
-		CommandEventMarshaler: cqrs.JSONMarshaler{},
-		CommandsPublisher:     f.publisher,
-		EventsPublisher:       f.publisher,
-		Router:                f.router,
-		Logger:                watermillzap.NewLogger(f.logger.Named("cqrsFacade")),
-		CommandHandlers:       f.registry.GetCommandHandlerFactory(),
-		EventHandlers:         f.registry.GetEventHandlerFactory(),
+		Marshaler: cqrs.JSONMarshaler{},
+		Logger:    watermillzap.NewLogger(logger.Named("cqrsFacade")),
 	})
 
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create cqrs pubsub")
-	}
+	return commandBus, err
+}
 
-	return cqrsFacade, nil
+// NewEventBus creates a new event bus.
+func NewEventBus(publisher message.Publisher, logger *zap.Logger) (*cqrs.EventBus, error) {
+	eventBus, err := cqrs.NewEventBusWithConfig(publisher, cqrs.EventBusConfig{
+		GeneratePublishTopic: func(params cqrs.GenerateEventPublishTopicParams) (string, error) {
+			return params.EventName, nil
+		},
+		OnPublish: func(params cqrs.OnEventSendParams) error {
+			params.Message.Metadata.Set("published_at", time.Now().String())
+			return nil
+		},
+		Marshaler: cqrs.JSONMarshaler{},
+		Logger:    watermillzap.NewLogger(logger.Named("cqrsFacade")),
+	})
+
+	return eventBus, err
+}
+
+func NewEventGroupProcessor(router *message.Router, subscriber message.Subscriber, logger *zap.Logger) (*cqrs.EventGroupProcessor, error) {
+	return cqrs.NewEventGroupProcessorWithConfig(
+		router,
+		cqrs.EventGroupProcessorConfig{
+			GenerateSubscribeTopic: func(params cqrs.EventGroupProcessorGenerateSubscribeTopicParams) (string, error) {
+				return params.EventGroupName, nil
+			},
+			SubscriberConstructor: func(params cqrs.EventGroupProcessorSubscriberConstructorParams) (message.Subscriber, error) {
+				return subscriber, nil
+			},
+
+			OnHandle: func(params cqrs.EventGroupProcessorOnHandleParams) error {
+				err := params.Handler.Handle(params.Message.Context(), params.Event)
+				return err
+			},
+
+			Marshaler: cqrs.JSONMarshaler{},
+			Logger:    watermillzap.NewLogger(logger.Named("eventGroupProcessor")),
+		},
+	)
+}
+
+// NewCommandProcessor creates a new command processor.
+func NewCommandProcessor(router *message.Router, subscriber message.Subscriber, logger *zap.Logger) (*cqrs.CommandProcessor, error) {
+	return cqrs.NewCommandProcessorWithConfig(
+		router,
+		cqrs.CommandProcessorConfig{
+			GenerateSubscribeTopic: func(params cqrs.CommandProcessorGenerateSubscribeTopicParams) (string, error) {
+				return params.CommandName, nil
+			},
+			SubscriberConstructor: func(params cqrs.CommandProcessorSubscriberConstructorParams) (message.Subscriber, error) {
+				return subscriber, nil
+			},
+
+			OnHandle: func(params cqrs.CommandProcessorOnHandleParams) error {
+				err := params.Handler.Handle(params.Message.Context(), params.Command)
+				return err
+			},
+
+			Marshaler: cqrs.JSONMarshaler{},
+			Logger:    watermillzap.NewLogger(logger.Named("commandProcessor")),
+		},
+	)
 }
