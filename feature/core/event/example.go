@@ -8,21 +8,9 @@ import (
 )
 
 type ExampleHandler struct {
-	logger     *zap.Logger
-	eventBus   *cqrs.EventBus
-	commandBus *cqrs.CommandBus
-}
-
-// this handler used to init the wallet when user registered
-
-func NewExampleHandler(
-	logger *zap.Logger,
-) *ExampleHandler {
-	handler := &ExampleHandler{
-		logger: logger,
-	}
-
-	return handler
+	Logger     *zap.Logger
+	EventBus   *cqrs.EventBus
+	CommandBus *cqrs.CommandBus
 }
 
 func (h *ExampleHandler) HandlerName() string {
@@ -31,11 +19,6 @@ func (h *ExampleHandler) HandlerName() string {
 
 func (h *ExampleHandler) NewEvent() interface{} {
 	return &model.ShopInstalledEvt{}
-}
-
-func (h *ExampleHandler) RegisterBus(commandBus *cqrs.CommandBus, eventBus *cqrs.EventBus) {
-	h.eventBus = eventBus
-	h.commandBus = commandBus
 }
 
 func (h *ExampleHandler) Handle(ctx context.Context, event interface{}) error {

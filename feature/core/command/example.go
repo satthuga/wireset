@@ -9,8 +9,8 @@ import (
 )
 
 type ExampleHandler struct {
-	eventBus   *cqrs.EventBus
-	commandBus *cqrs.CommandBus
+	EventBus   *cqrs.EventBus
+	CommandBus *cqrs.CommandBus
 }
 
 func NewExampleHandler() *ExampleHandler {
@@ -23,11 +23,6 @@ func (h *ExampleHandler) HandlerName() string {
 
 func (h *ExampleHandler) NewCommand() interface{} {
 	return &model.ExampleCmd{}
-}
-
-func (h *ExampleHandler) RegisterBus(commandBus *cqrs.CommandBus, eventBus *cqrs.EventBus) {
-	h.eventBus = eventBus
-	h.commandBus = commandBus
 }
 
 func (h *ExampleHandler) Handle(ctx context.Context, cmd interface{}) error {
