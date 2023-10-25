@@ -1,8 +1,8 @@
-package notify
+package discord_notify
 
 import (
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
-	"github.com/aiocean/wireset/feature/notify/event"
+	"github.com/aiocean/wireset/feature/discord-notify/event"
 	"github.com/google/wire"
 )
 

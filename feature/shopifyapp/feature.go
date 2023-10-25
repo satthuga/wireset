@@ -1,11 +1,11 @@
-package core
+package shopifyapp
 
 import (
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
-	"github.com/aiocean/wireset/feature/core/command"
-	"github.com/aiocean/wireset/feature/core/event"
-	"github.com/aiocean/wireset/feature/core/handler"
-	"github.com/aiocean/wireset/feature/core/middleware"
+	"github.com/aiocean/wireset/feature/shopifyapp/command"
+	"github.com/aiocean/wireset/feature/shopifyapp/event"
+	"github.com/aiocean/wireset/feature/shopifyapp/handler"
+	"github.com/aiocean/wireset/feature/shopifyapp/middleware"
 	"github.com/aiocean/wireset/fiberapp"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/wire"

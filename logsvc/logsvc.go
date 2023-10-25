@@ -1,6 +1,7 @@
 package logsvc
 
 import (
+	"os"
 	"time"
 
 	"github.com/google/wire"
@@ -8,10 +9,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var DefaultWireset = wire.NewSet(NewLogger)
+var DefaultWireset = wire.NewSet(NewLogger, DefaultConfig)
 
-func NewLogger() (*zap.Logger, error) {
+func DefaultConfig() (zap.Config, error) {
+
 	loc := time.FixedZone("UTC+7", 7*60*60)
+
+	environment := os.Getenv("ENVIRONMENT")
 
 	encoderConfig := zapcore.EncoderConfig{
 		TimeKey:       "ts",
@@ -31,7 +35,7 @@ func NewLogger() (*zap.Logger, error) {
 
 	zapConfig := zap.Config{
 		Level:             zap.NewAtomicLevelAt(zap.DebugLevel),
-		Development:       true,
+		Development:       environment == "development",
 		EncoderConfig:     encoderConfig,
 		DisableStacktrace: true,
 		DisableCaller:     true,
@@ -39,6 +43,11 @@ func NewLogger() (*zap.Logger, error) {
 		OutputPaths:       []string{"stderr"},
 		ErrorOutputPaths:  []string{"stderr"},
 	}
+
+	return zapConfig, nil
+}
+
+func NewLogger(zapConfig zap.Config) (*zap.Logger, error) {
 
 	logger, err := zapConfig.Build(zap.WrapCore(func(c zapcore.Core) zapcore.Core {
 		return ignoreHealthCheckCore{c: c}

@@ -5,6 +5,7 @@ import (
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/auth"
 	"github.com/google/wire"
+	"github.com/pkg/errors"
 )
 
 var DefaultWireset = wire.NewSet(
@@ -16,7 +17,7 @@ func NewFirebaseAuthSvc(
 ) (*auth.Client, error) {
 	client, err := firebaseApp.Auth(context.Background())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to initialize firebase auth client")
 	}
 	return client, nil
 }
