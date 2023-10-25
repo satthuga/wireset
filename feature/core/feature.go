@@ -7,6 +7,7 @@ import (
 	"github.com/aiocean/wireset/feature/core/handler"
 	"github.com/aiocean/wireset/feature/core/middleware"
 	"github.com/aiocean/wireset/fiberapp"
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/wire"
 )
 

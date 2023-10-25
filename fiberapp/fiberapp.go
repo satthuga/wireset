@@ -30,6 +30,7 @@ func NewFiberApp(
 	logger := logsvc.With(zap.Strings("tags", []string{"fiber"}))
 
 	app := fiber.New(fiber.Config{
+		BodyLimit:             50 * 1024 * 1024,
 		AppName:               cfg.ServiceName,
 		JSONEncoder:           json.Marshal,
 		JSONDecoder:           json.Unmarshal,

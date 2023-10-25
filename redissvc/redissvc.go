@@ -13,6 +13,11 @@ var DefaultWireset = wire.NewSet(
 	NewRedisClient,
 )
 
+var EnvWireset = wire.NewSet(
+	NewRedisClient,
+	RedisConfigFromEnv,
+)
+
 func RedisConfigFromEnv() (*redis.Options, error) {
 	uri, ok := os.LookupEnv("REDIS_URI")
 	if !ok {

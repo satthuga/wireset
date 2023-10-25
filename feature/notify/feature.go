@@ -1,8 +1,8 @@
 package notify
 
 import (
+	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/aiocean/wireset/feature/notify/event"
-	"github.com/aiocean/wireset/pubsub"
 	"github.com/google/wire"
 )
 
@@ -12,11 +12,11 @@ var DefaultWireset = wire.NewSet(
 )
 
 type FeatureNotify struct {
-	HandlerRegistry               *pubsub.HandlerRegistry
+	EvtProcessor                  *cqrs.EventProcessor
 	NotifyDiscordOnInstallHandler *event.NotifyDiscordOnInstallHandler
 }
 
 func (f *FeatureNotify) Init() error {
-	f.HandlerRegistry.AddEventHandler(f.NotifyDiscordOnInstallHandler)
+	f.EvtProcessor.AddHandlers(f.NotifyDiscordOnInstallHandler)
 	return nil
 }

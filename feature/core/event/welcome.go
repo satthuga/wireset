@@ -5,7 +5,6 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/aiocean/wireset/model"
-	"github.com/aiocean/wireset/pubsub"
 	"go.uber.org/zap"
 )
 
@@ -13,7 +12,6 @@ type WelcomeHandler struct {
 	Logger     *zap.Logger
 	EventBus   *cqrs.EventBus
 	CommandBus *cqrs.CommandBus
-	Registry   *pubsub.HandlerRegistry
 }
 
 // NewWelcomeHandler creates a new WelcomeHandler.

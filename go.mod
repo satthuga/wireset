@@ -16,14 +16,15 @@ require (
 	github.com/dgraph-io/ristretto v0.1.1
 	github.com/garsue/watermillzap v1.2.0
 	github.com/gofiber/contrib/fiberzap v1.0.2
+	github.com/gofiber/contrib/websocket v1.2.2
 	github.com/gofiber/fiber/v2 v2.49.2
-	github.com/gofiber/websocket/v2 v2.2.1
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/google/wire v0.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.17.0
 	github.com/redis/go-redis/v9 v9.2.1
 	github.com/tidwall/gjson v1.17.0
+	github.com/tidwall/sjson v1.2.5
 	go.uber.org/zap v1.26.0
 	google.golang.org/api v0.144.0
 	google.golang.org/grpc v1.58.2
@@ -53,7 +54,7 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ebitengine/purego v0.5.0 // indirect
-	github.com/fasthttp/websocket v1.5.3 // indirect
+	github.com/fasthttp/websocket v1.5.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.1.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
