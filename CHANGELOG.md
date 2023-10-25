@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.4.0](https://github.com/aiocean/wireset/compare/v0.3.0...v0.4.0) (2023-10-18)
+
+
+### Features
+
+* supprot connrct uri ([f587d24](https://github.com/aiocean/wireset/commit/f587d24355ae9907b94bda80ab35751ff261ad6e))
+* update ([8bd36a2](https://github.com/aiocean/wireset/commit/8bd36a2cb0d6f9734e783c05f0ba404166c8a62a))
+* update ([f7d7079](https://github.com/aiocean/wireset/commit/f7d70790e891af430230821bb67b4830c2d0e031))
+* update ([c2b296f](https://github.com/aiocean/wireset/commit/c2b296f370a6b4b542c051e7fcfae3db0ab781d0))
+* upgrade watermilk ([2cb8d8f](https://github.com/aiocean/wireset/commit/2cb8d8fedf24902662b599412ed56610ee5216aa))
+
+
+### Bug Fixes
+
+* http registry ([f6bfd9e](https://github.com/aiocean/wireset/commit/f6bfd9e7a280aa3d93cf73824009cd73843323e7))
+
 ## [0.3.0](https://github.com/aiocean/wireset/compare/v0.2.0...v0.3.0) (2023-07-28)
 
 
