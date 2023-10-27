@@ -1,8 +1,8 @@
 package handler
 
 import (
+	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/aiocean/wireset/model"
-	"github.com/aiocean/wireset/pubsub"
 	"github.com/aiocean/wireset/repository"
 	"net/http"
 
@@ -11,12 +11,12 @@ import (
 
 type WebhookHandler struct {
 	ShopRepo *repository.ShopRepository
-	Pubsub   *pubsub.Pubsub
+	EventBus *cqrs.EventBus
 	FiberApp *fiber.App
 }
 
 func (s *WebhookHandler) Uninstalled(c *fiber.Ctx) error {
-	s.Pubsub.Send(c.UserContext(), &model.ShopUninstalledEvt{
+	s.EventBus.Publish(c.UserContext(), &model.ShopUninstalledEvt{
 		MyshopifyDomain: c.Query("shop"),
 	})
 

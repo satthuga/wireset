@@ -48,7 +48,7 @@ func (s *AuthHandler) LoginCallback(ctx *fiber.Ctx) error {
 			return fiber.NewError(http.StatusBadRequest, err.Error())
 		}
 
-		s.PubsubSvc.Publish(ctx.UserContext(), &model.ShopInstalledEvt{
+		s.EventBus.Publish(ctx.UserContext(), &model.ShopInstalledEvt{
 			MyshopifyDomain: shopName,
 			AccessToken:     accessToken,
 			ShopID:          shopDetails.ID,

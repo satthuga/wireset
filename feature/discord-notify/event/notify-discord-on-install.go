@@ -3,7 +3,7 @@ package event
 import (
 	"context"
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
-	"github.com/aiocean/wireset/feature/notify/config"
+	"github.com/aiocean/wireset/feature/discord-notify/config"
 	"github.com/aiocean/wireset/model"
 	"go.uber.org/zap"
 	"net/http"
