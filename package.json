@@ -1,7 +1,7 @@
 {
   "scripts": {
     "dev": "vitepress dev docs",
-    "build": "vitepress build docs --base /wireset/",
+    "build": "vitepress build --base /wireset/ docs",
     "preview": "vitepress preview docs"
   },
   "devDependencies": {
