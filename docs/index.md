@@ -1,28 +1,27 @@
 ---
-# https://vitepress.dev/reference/default-theme-home-page
 layout: home
 
 hero:
-  name: "Useful Wireset"
-  text: "For my next project"
-  tagline: "Because I am to lazy to write it again and again"
+  name: "Efficient Wireset"
+  text: "For your upcoming projects"
+  tagline: "Streamlining your development process"
   actions:
     - theme: brand
-      text: Get Started
-      link: /getting-started
+      text: Begin Now
+      link: /guide/getting-started
     - theme: alt
-      text: Wiresets
+      text: Explore Wiresets
       link: /wiresets/
     - theme: alt
-      text: Contribute
+      text: Join Us
       link: /api-examples
 
 features:
-  - title: Dependency Injection
-    details: You do not need to know how the dependency is created, just tell me what you need.
-  - title: Code generation
-    details: Generate code for you, so you do not need to write it again and again.
-  - title: Out-of-the-box
-    details: We provide a lot of useful wireset for you, so you can focus on your business logic.
+  - title: Simplified Dependency Injection
+    details: Let us handle the creation of dependencies. You just tell us what you need.
+  - title: Automated Code Generation
+    details: We generate code for you, reducing repetitive tasks.
+  - title: Ready-to-use Solutions
+    details: We offer a variety of useful wiresets, allowing you to concentrate on your core business logic.
 ---
 
