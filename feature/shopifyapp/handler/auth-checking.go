@@ -83,7 +83,7 @@ func (s *AuthHandler) Checkin(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if err := s.PubsubSvc.Send(ctx.UserContext(), &model.ShopCheckedInEvt{
+	if err := s.EventBus.Publish(ctx.UserContext(), &model.ShopCheckedInEvt{
 		MyshopifyDomain: shop.MyshopifyDomain,
 		AccessToken:     accessToken.AccessToken,
 		ShopID:          shop.ID,

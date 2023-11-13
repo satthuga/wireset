@@ -2,6 +2,7 @@ package wireset
 
 import (
 	"github.com/aiocean/wireset/cachesvc"
+	"github.com/aiocean/wireset/feature/shopifyapp"
 	"github.com/aiocean/wireset/fiberapp"
 	"github.com/aiocean/wireset/fireauthsvc"
 	"github.com/aiocean/wireset/firestoresvc"
@@ -30,6 +31,7 @@ var ShopifyAppWireset = wire.NewSet(
 	logsvc.DefaultWireset,
 	pubsub.DefaultWireset,
 	cachesvc.DefaultWireset,
+	shopifyapp.DefaultWireset,
 )
 
 // NormalAppWireset is a wire set that provides dependencies for a normal app.
