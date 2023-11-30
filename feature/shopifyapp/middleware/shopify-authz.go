@@ -66,7 +66,7 @@ func (s *ShopifyAuthzMiddleware) IsAuthRequired(path string) bool {
 	return true
 }
 
-// TODO the token which sent from shopify have expired time, we can use this time to cache the authz result, so that we do not need to query database every time
+// Handle TODO the token which sent from shopify have expired time, we can use this time to cache the authz result, so that we do not need to query database every time
 func (s *ShopifyAuthzMiddleware) Handle(c *fiber.Ctx) error {
 	if !s.IsAuthRequired(c.OriginalURL()) {
 		return c.Next()

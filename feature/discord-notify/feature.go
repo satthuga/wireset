@@ -17,6 +17,9 @@ type FeatureNotify struct {
 }
 
 func (f *FeatureNotify) Init() error {
-	f.EvtProcessor.AddHandlers(f.NotifyDiscordOnInstallHandler)
+	err := f.EvtProcessor.AddHandlers(f.NotifyDiscordOnInstallHandler)
+	if err != nil {
+		return err
+	}
 	return nil
 }

@@ -1,5 +1,10 @@
 package shopifysvc
 
+import (
+	"github.com/tidwall/gjson"
+	"strings"
+)
+
 type Shop struct {
 	ID                   string `json:"id" firestore:"id"`
 	Name                 string `json:"name" firestore:"name"`
@@ -14,4 +19,16 @@ type Shop struct {
 
 type Product struct {
 	ID string `json:"id" firestore:"id"`
+}
+
+func (e *GraphQLError) Error() string {
+	messages := make([]string, len(e.Errors))
+	for i, err := range e.Errors {
+		messages[i] = err.Get("message").String()
+	}
+	return strings.Join(messages, "\n")
+}
+
+type GraphQLError struct {
+	Errors []gjson.Result
 }

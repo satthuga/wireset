@@ -1,0 +1,32 @@
+{
+	"data": null,
+	"errors": [
+		{
+			"message": "Access denied for products field.",
+			"locations": [
+				{
+					"line": 2,
+					"column": 2
+				}
+			],
+			"path": [
+				"products"
+			],
+			"extensions": {
+				"code": "ACCESS_DENIED",
+				"documentation": "https:\/\/shopify.dev\/api\/usage\/access-scopes"
+			}
+		}
+	],
+	"extensions": {
+		"cost": {
+			"requestedQueryCost": 20,
+			"actualQueryCost": 2,
+			"throttleStatus": {
+				"maximumAvailable": 1000.0,
+				"currentlyAvailable": 998,
+				"restoreRate": 50.0
+			}
+		}
+	}
+}

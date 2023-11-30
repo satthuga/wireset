@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"firebase.google.com/go/auth"
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/aiocean/wireset/cachesvc"
 	"github.com/aiocean/wireset/configsvc"
@@ -22,5 +21,4 @@ type AuthHandler struct {
 	CommandBus     *cqrs.CommandBus
 	LogSvc         *zap.Logger
 	CacheSvc       *cachesvc.CacheService
-	FireAuth       *auth.Client
 }

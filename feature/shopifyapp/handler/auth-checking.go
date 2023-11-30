@@ -1,14 +1,12 @@
 package handler
 
 import (
-	"context"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/aiocean/wireset/model"
-	"github.com/aiocean/wireset/repository"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 )
@@ -91,38 +89,10 @@ func (s *AuthHandler) Checkin(ctx *fiber.Ctx) error {
 		s.LogSvc.Error("error while publishing event", zap.Error(err))
 	}
 
-	// This user is authorized, create custom firebase token
-	normalizedId, err := repository.NormalizeShopID(shop.ID)
-	if err != nil {
-		s.LogSvc.Error("error while normalizing shop id", zap.Error(err))
-		return ctx.Status(http.StatusInternalServerError).JSON(model.AuthResponse{
-			Message: "Internal server error",
-		})
-	}
-	firebaseToken, err := s.FireAuth.CustomToken(ctx.UserContext(), normalizedId)
-	if err != nil {
-		s.LogSvc.Error("error while creating custom token", zap.Error(err))
-		return ctx.Status(http.StatusInternalServerError).JSON(model.AuthResponse{
-			Message: "Internal server error",
-		})
-	}
-
 	authResponse := model.AuthResponse{
-		Message:             "Authorized",
-		FirebaseCustomToken: firebaseToken,
+		Message: "Authorized",
 	}
 
 	s.CacheSvc.SetWithTTL(authentication, authResponse, time.Second*5)
 	return ctx.Status(http.StatusOK).JSON(authResponse)
-}
-
-// CreateFirebaseToken creates a custom Firebase token for the given user ID.
-func (s *AuthHandler) CreateFirebaseToken(ctx context.Context, shopID string) (string, error) {
-
-	token, err := s.FireAuth.CustomToken(ctx, shopID)
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
 }
