@@ -6,8 +6,10 @@ import (
 	"github.com/aiocean/wireset/configsvc"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
+	"github.com/gofiber/fiber/v2/middleware/proxy"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"go.uber.org/zap"
+	"os"
 	"time"
 
 	"github.com/gofiber/contrib/fiberzap"
@@ -78,6 +80,11 @@ func NewFiberApp(
 		}
 
 		logger.Info("fiber app shut down")
+	}
+
+	proxyUrl := os.Getenv("PROXY_URL")
+	if proxyUrl != "" {
+		app.Use(proxy.Forward(proxyUrl))
 	}
 
 	return app, cleanup, nil
