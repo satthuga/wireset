@@ -45,7 +45,7 @@ func (s *Server) Start(ctx context.Context) chan error {
 
 	// start message router
 	go func() {
-		err := s.MsgRouter.Run(context.Background())
+		err := s.MsgRouter.Run(ctx)
 		if err != nil {
 			errChan <- errors.WithMessage(err, "failed to run message router")
 			return

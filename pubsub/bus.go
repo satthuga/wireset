@@ -4,6 +4,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/garsue/watermillzap"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"time"
 )
@@ -55,7 +56,7 @@ func NewEventProcessor(router *message.Router, subscriber message.Subscriber, lo
 
 			OnHandle: func(params cqrs.EventProcessorOnHandleParams) error {
 				err := params.Handler.Handle(params.Message.Context(), params.Event)
-				return err
+				return errors.Wrap(err, "error handling event")
 			},
 
 			Marshaler: cqrs.JSONMarshaler{},
@@ -78,7 +79,7 @@ func NewCommandProcessor(router *message.Router, subscriber message.Subscriber, 
 
 			OnHandle: func(params cqrs.CommandProcessorOnHandleParams) error {
 				err := params.Handler.Handle(params.Message.Context(), params.Command)
-				return err
+				return errors.Wrap(err, "error handling command")
 			},
 
 			Marshaler: cqrs.JSONMarshaler{},
