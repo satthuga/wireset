@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/proxy"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"go.uber.org/zap"
+	"net/url"
 	"os"
 	"time"
 
@@ -82,9 +83,14 @@ func NewFiberApp(
 		logger.Info("fiber app shut down")
 	}
 
+	// this is used for local development, to proxy to the real endpoint
 	proxyUrl := os.Getenv("PROXY_URL")
 	if proxyUrl != "" {
-		app.Use(proxy.Forward(proxyUrl))
+
+		app.Use(func(c *fiber.Ctx) error {
+			endpointUrl, _ := url.JoinPath(proxyUrl, c.Path())
+			return proxy.Forward(endpointUrl)(c)
+		})
 	}
 
 	return app, cleanup, nil
