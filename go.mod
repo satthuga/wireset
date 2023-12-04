@@ -11,6 +11,7 @@ require (
 	github.com/bold-commerce/go-shopify/v3 v3.15.0
 	github.com/casbin/casbin/v2 v2.79.0
 	github.com/casbin/mongodb-adapter/v3 v3.5.0
+	github.com/casbin/redis-adapter/v3 v3.2.1
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/dgraph-io/dgo/v2 v2.2.0
 	github.com/dgraph-io/ristretto v0.1.1
@@ -44,17 +45,14 @@ require (
 	github.com/DataDog/datadog-agent/pkg/util/log v0.49.0 // indirect
 	github.com/DataDog/datadog-agent/pkg/util/scrubber v0.49.0 // indirect
 	github.com/DataDog/datadog-go/v5 v5.3.0 // indirect
-	github.com/DataDog/go-libddwaf v1.7.0 // indirect
 	github.com/DataDog/go-libddwaf/v2 v2.2.1 // indirect
 	github.com/DataDog/go-tuf v1.0.2-0.5.2 // indirect
 	github.com/DataDog/sketches-go v1.4.3 // indirect
-	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/Rican7/retry v0.3.1 // indirect
 	github.com/andybalholm/brotli v1.0.6 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/casbin/govaluate v1.1.1 // indirect
-	github.com/casbin/redis-adapter/v3 v3.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
@@ -69,7 +67,6 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gomodule/redigo v1.8.9 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/google/uuid v1.4.0 // indirect
@@ -82,7 +79,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
