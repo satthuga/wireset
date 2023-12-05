@@ -18,7 +18,10 @@ var GoroutineWireset = wire.NewSet(
 
 func NewGoChannel(logger *zap.Logger) (*gochannel.GoChannel, func(), error) {
 	channel := gochannel.NewGoChannel(
-		gochannel.Config{},
+		gochannel.Config{
+			OutputChannelBuffer:            100,
+			BlockPublishUntilSubscriberAck: false,
+		},
 		watermillzap.NewLogger(logger.Named("channel")),
 	)
 	cleanup := func() {
