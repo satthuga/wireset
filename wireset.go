@@ -47,3 +47,12 @@ var NormalAppWireset = wire.NewSet(
 	pubsub.DefaultWireset,
 	cachesvc.DefaultWireset,
 )
+
+var MinimalAppWireset = wire.NewSet(
+	fiberapp.DefaultWireset,
+	server.DefaultWireset,
+	tracersvc.TracerSvcWireset,
+	logsvc.DefaultWireset,
+	pubsub.DefaultWireset,
+	cachesvc.DefaultWireset,
+)
