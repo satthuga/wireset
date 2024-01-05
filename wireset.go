@@ -56,3 +56,7 @@ var MinimalAppWireset = wire.NewSet(
 	pubsub.DefaultWireset,
 	cachesvc.DefaultWireset,
 )
+
+var CliAppWireset = wire.NewSet(
+	logsvc.DefaultWireset,
+)
