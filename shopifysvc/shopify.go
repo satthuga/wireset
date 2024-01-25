@@ -362,7 +362,7 @@ const appDataMetafieldNamespace = "aio_decor"
 // GetAppDataMetaField returns the value of the app data metafield
 func (c *ShopifyClient) GetAppDataMetaField(ownerId, key string) (string, error) {
 	requestBody := &GraphQlRequest{
-		Query: `query GetAppDataMetafield($metafieldsQueryInput: MetafieldsQueryInput!) {
+		Query: `query GetAppDataMetafield($metafieldsQueryInput: [MetafieldsQueryInput!]!) {
 		  metafields(query: $metafieldsQueryInput) {
 			edges {
 		   node {
