@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type Server struct {
+type ApiServer struct {
 	MsgRouter           *message.Router
 	TracerSvc           *tracersvc.TracerSvc
 	ConfigSvc           *configsvc.ConfigService
@@ -25,10 +25,11 @@ type Server struct {
 }
 
 var DefaultWireset = wire.NewSet(
-	wire.Struct(new(Server), "*"),
+	wire.Struct(new(ApiServer), "*"),
+	wire.Bind(new(Server), new(*ApiServer)),
 )
 
-func (s *Server) Start(ctx context.Context) chan error {
+func (s *ApiServer) Start(ctx context.Context) chan error {
 	if s.ConfigSvc.DataDogAgentAddress != "" {
 		s.TracerSvc.Start()
 	}
