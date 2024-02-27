@@ -199,26 +199,27 @@ func (h *WebsocketHandler) Handle(conn *websocket.Conn) {
 	for {
 		if _, buf, err = conn.ReadMessage(); err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				logger.Error("read", zap.Error(err))
+				logger.Error("failed to read message, unexpected close error", zap.Error(err))
 			} else {
-				logger.Info("read", zap.Error(err))
+				logger.Info("failed to read message", zap.Error(err))
 			}
 			return
 		}
 
-		recipient = gjson.GetBytes(buf, "recipient").String()
+		// set sender
 		buf, err = sjson.SetBytes(buf, "sender", username)
 		if err != nil {
 			logger.Error("failed to set sender", zap.Error(err))
 			continue
 		}
 
-		if recipient == "system" {
-			continue
-		}
+		recipient = gjson.GetBytes(buf, "recipient").String()
+		if recipient != "system" {
+			if err := currentRoom.SendMessageTo(recipient, buf); err != nil {
+				logger.Error("send message", zap.Error(err))
+				continue
+			}
 
-		if err := currentRoom.SendMessageTo(recipient, buf); err != nil {
-			logger.Error("send message", zap.Error(err))
 			continue
 		}
 	}

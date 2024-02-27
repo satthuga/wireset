@@ -10,13 +10,14 @@ import (
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/wire"
+	"github.com/pkg/errors"
 )
 
 var DefaultWireset = wire.NewSet(
 	wire.Struct(new(FeatureRealtime), "*"),
 	handler.NewWebsocketHandler,
 	room.NewRoomManager,
-	wire.Struct(new(command.ExampleHandler), "*"),
+	wire.Struct(new(command.SendWsMessageHandler), "*"),
 	wire.Struct(new(event.ExampleHandler), "*"),
 )
 
@@ -27,16 +28,17 @@ type FeatureRealtime struct {
 	CommandProcessor *cqrs.CommandProcessor
 	EventProcessor   *cqrs.EventProcessor
 
-	ExampleCommandHandler *command.ExampleHandler
-	ExampleEventHandler   *event.ExampleHandler
+	SendWsMessageHandler *command.SendWsMessageHandler
+	ExampleEventHandler  *event.ExampleHandler
 }
 
 func (f *FeatureRealtime) Init() error {
-	if err := f.CommandProcessor.AddHandlers(f.ExampleCommandHandler); err != nil {
-		return err
+	if err := f.CommandProcessor.AddHandlers(f.SendWsMessageHandler); err != nil {
+		return errors.Wrap(err, "add command handler")
 	}
+
 	if err := f.EventProcessor.AddHandlers(f.ExampleEventHandler); err != nil {
-		return err
+		return errors.Wrap(err, "add event handler")
 	}
 
 	f.HttpRegistry.AddHttpMiddleware("/api/v1/ws", f.WebsocketHandler.Upgrade)

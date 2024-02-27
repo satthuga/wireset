@@ -9,9 +9,9 @@ require (
 	github.com/ThreeDotsLabs/watermill-redisstream v1.2.2
 	github.com/alitto/pond v1.8.3
 	github.com/bold-commerce/go-shopify/v3 v3.15.0
+	github.com/bwmarrin/discordgo v0.27.1
 	github.com/casbin/casbin/v2 v2.79.0
 	github.com/casbin/mongodb-adapter/v3 v3.5.0
-	github.com/casbin/redis-adapter/v3 v3.2.1
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/dgraph-io/dgo/v2 v2.2.0
 	github.com/dgraph-io/ristretto v0.1.1
@@ -20,6 +20,7 @@ require (
 	github.com/gofiber/contrib/websocket v1.2.2
 	github.com/gofiber/fiber/v2 v2.51.0
 	github.com/golang-jwt/jwt/v5 v5.2.0
+	github.com/google/generative-ai-go v0.8.0
 	github.com/google/wire v0.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.17.0
@@ -34,6 +35,7 @@ require (
 
 require (
 	cloud.google.com/go v0.111.0 // indirect
+	cloud.google.com/go/ai v0.3.0 // indirect
 	cloud.google.com/go/compute v1.23.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.5 // indirect
@@ -52,7 +54,6 @@ require (
 	github.com/Rican7/retry v0.3.1 // indirect
 	github.com/andybalholm/brotli v1.0.6 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bwmarrin/discordgo v0.27.1 // indirect
 	github.com/casbin/govaluate v1.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575 // indirect
@@ -67,7 +68,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/gomodule/redigo v1.8.9 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/google/uuid v1.4.0 // indirect
