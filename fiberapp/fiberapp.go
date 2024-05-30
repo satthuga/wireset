@@ -88,6 +88,9 @@ func NewFiberApp(
 	if proxyUrl != "" {
 
 		app.Use(func(c *fiber.Ctx) error {
+			if c.Path() == "/healthz" {
+				return c.Next()
+			}
 			endpointUrl, _ := url.JoinPath(proxyUrl, c.Path())
 			return proxy.Forward(endpointUrl)(c)
 		})
