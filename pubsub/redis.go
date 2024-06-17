@@ -3,6 +3,7 @@ package pubsub
 import (
 	"github.com/ThreeDotsLabs/watermill-redisstream/pkg/redisstream"
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/aiocean/wireset/configsvc"
 	"github.com/garsue/watermillzap"
 	"github.com/google/wire"
 	"github.com/redis/go-redis/v9"
@@ -16,12 +17,12 @@ var RedisWireset = wire.NewSet(
 	wire.Bind(new(message.Publisher), new(*redisstream.Publisher)),
 )
 
-func NewRedisSubscriber(subClient *redis.Client, logger *zap.Logger) (*redisstream.Subscriber, func(), error) {
+func NewRedisSubscriber(subClient *redis.Client, logger *zap.Logger, globalConfig *configsvc.ConfigService) (*redisstream.Subscriber, func(), error) {
 	subscriber, err := redisstream.NewSubscriber(
 		redisstream.SubscriberConfig{
 			Client:        subClient,
 			Unmarshaller:  redisstream.DefaultMarshallerUnmarshaller{},
-			ConsumerGroup: "test_consumer_group",
+			ConsumerGroup: "consumer_group_" + globalConfig.ServiceName,
 		},
 		watermillzap.NewLogger(logger.Named("subscriber")),
 	)

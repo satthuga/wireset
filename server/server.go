@@ -38,6 +38,7 @@ func (s *ApiServer) Start(ctx context.Context) chan error {
 
 	// in it features
 	for _, feature := range s.Features {
+		s.LogSvc.Info("Initializing feature", zap.String("feature", feature.Name()))
 		if err := feature.Init(); err != nil {
 			errChan <- errors.WithMessage(err, "failed to init feature")
 			return errChan
