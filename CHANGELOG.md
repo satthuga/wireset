@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.8.0](https://github.com/aiocean/wireset/compare/v0.7.0...v0.8.0) (2024-07-05)
+
+
+### Features
+
+* add health check endpoint bypass for proxy in fiberapp ([63c04d7](https://github.com/aiocean/wireset/commit/63c04d7e295b1de48330be8a7a9124e2aaf7c29f))
+* Add health check endpoint bypass for proxy in fiberapp ([769f7c8](https://github.com/aiocean/wireset/commit/769f7c8ea7e93b2da28cb4c58caa287723fa4a75))
+* Add MinimalAppWireset and health check endpoint ([d10fac8](https://github.com/aiocean/wireset/commit/d10fac85fe503d11def72981ccea836ba5f77e80))
+* **redissvc:** refactor Redis service ([9defee4](https://github.com/aiocean/wireset/commit/9defee4eff1d2ab5a6a15fcacae75ee775d05dfe))
+* supprot connrct uri ([68418d9](https://github.com/aiocean/wireset/commit/68418d9b57226b9fb24744f9add2e12a47fc5487))
+
+
+### Bug Fixes
+
+* service should have name ([ed80365](https://github.com/aiocean/wireset/commit/ed80365b2efc3fd69ca2af51901423271538b21a))
+* service should have name ([9611d65](https://github.com/aiocean/wireset/commit/9611d65d84952fd2650b4eb1d7066548dc6010bc))
+
 ## [0.7.0](https://github.com/aiocean/wireset/compare/v0.6.0...v0.7.0) (2024-07-05)
 
 
