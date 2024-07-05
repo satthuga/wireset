@@ -58,6 +58,10 @@ type FeatureCore struct {
 	WsRegistry       *registry.HandlerRegistry
 }
 
+func (f *FeatureCore) Name() string {
+	return "shopifyapp"
+}
+
 func (f *FeatureCore) Init() error {
 
 	if err := f.CommandProcessor.AddHandlers(

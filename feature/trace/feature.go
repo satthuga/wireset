@@ -19,6 +19,10 @@ type FeatureTrace struct {
 	Logger    *zap.Logger
 }
 
+func (f *FeatureTrace) Name() string {
+	return "trace"
+}
+
 func (f *FeatureTrace) Init() error {
 	f.TraderSvc.Start()
 	f.FiberApp.Use(fibertrace.Middleware())

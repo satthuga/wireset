@@ -36,6 +36,11 @@ type FeatureRealtime struct {
 	SendWsMessageHandler *command.SendWsMessageHandler
 }
 
+func (f *FeatureRealtime) Name() string {
+	return "realtime"
+
+}
+
 func (f *FeatureRealtime) Init() error {
 	if err := f.CommandProcessor.AddHandlers(f.SendWsMessageHandler); err != nil {
 		return errors.Wrap(err, "add command api")

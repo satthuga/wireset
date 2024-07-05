@@ -23,3 +23,7 @@ func (f *FeatureNotify) Init() error {
 	}
 	return nil
 }
+
+func (f *FeatureNotify) Name() string {
+	return "discord-notify"
+}
