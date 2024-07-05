@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Retry provides a middleware that retries the handler if errors are returned.
+// Retry provides a middleware that retries the api if errors are returned.
 // The retry behaviour is configurable, with exponential backoff and maximum elapsed time.
 type Retry struct {
 	// MaxRetries is maximum number of times a retry will be attempted.
@@ -44,9 +44,9 @@ func (r Retry) Middleware(h message.HandlerFunc) message.HandlerFunc {
 		defer func() {
 			if reason := recover(); reason != nil {
 				if r.OnFailed != nil {
-					_, err = r.OnFailed(msg, errors.WithStack(fmt.Errorf("recover: %v: ; Stack: %v", reason, debug.Stack())))
+					_, err = r.OnFailed(msg, errors.WithStack(fmt.Errorf("recover: %v: ; Stack: %s", reason, debug.Stack())))
 				} else {
-					err = errors.WithStack(fmt.Errorf("recover: %v: ; Stack: %v", reason, debug.Stack()))
+					err = errors.WithStack(fmt.Errorf("recover: %v: ; Stack: %s", reason, debug.Stack()))
 				}
 			}
 		}()

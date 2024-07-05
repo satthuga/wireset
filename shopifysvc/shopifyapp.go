@@ -10,6 +10,5 @@ func NewShopifyApp(shopifyConfig *Config, config *configsvc.ConfigService) *gosh
 		ApiKey:      shopifyConfig.ClientId,
 		ApiSecret:   shopifyConfig.ClientSecret,
 		RedirectUrl: config.ServiceUrl + "/auth/shopify/login-callback",
-		Scope:       shopifyConfig.Scope,
 	}
 }

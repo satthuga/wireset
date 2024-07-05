@@ -33,8 +33,13 @@ func DefaultConfig() (zap.Config, error) {
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
 
+	logLevel := zap.ErrorLevel
+	if environment == "development" {
+		logLevel = zap.DebugLevel
+	}
+
 	zapConfig := zap.Config{
-		Level:             zap.NewAtomicLevelAt(zap.DebugLevel),
+		Level:             zap.NewAtomicLevelAt(logLevel),
 		Development:       environment == "development",
 		EncoderConfig:     encoderConfig,
 		DisableStacktrace: true,

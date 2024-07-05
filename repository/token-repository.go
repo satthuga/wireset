@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/aiocean/wireset/model"
 
@@ -57,6 +59,8 @@ func (r *TokenRepository) GetToken(ctx context.Context, shopID string) (*model.S
 	return &token, nil
 }
 
+var ErrTokenNotFound = errors.New("token not found")
+
 func (r *TokenRepository) SaveAccessToken(ctx context.Context, token *model.ShopifyToken) error {
 	if token == nil {
 		return errors.New("token is nil")
@@ -75,6 +79,9 @@ func (r *TokenRepository) SaveAccessToken(ctx context.Context, token *model.Shop
 	}
 
 	if _, err := r.firestoreClient.Collection("shops").Doc(normalizedShopID).Update(ctx, updates); err != nil {
+		if status.Code(err) == codes.NotFound {
+			return errors.WithMessage(ErrTokenNotFound, "failed to update shop: "+normalizedShopID)
+		}
 		return errors.WithMessage(err, "failed to update shop")
 	}
 

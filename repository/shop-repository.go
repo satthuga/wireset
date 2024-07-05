@@ -48,6 +48,23 @@ func (r *ShopRepository) IsShopExists(ctx context.Context, shopID string) (bool,
 	return snapshot.Exists(), nil
 }
 
+// IsDomainExists checks if the shop domain exists
+func (r *ShopRepository) IsDomainExists(ctx context.Context, domain string) (bool, error) {
+	cur := r.firestoreClient.Collection("shops").Where("myshopifyDomain", "==", domain).Documents(ctx)
+	defer cur.Stop()
+
+	_, err := cur.Next()
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return false, nil
+		}
+
+		return false, errors.WithMessage(err, "get shop")
+	}
+
+	return true, nil
+}
+
 func (r *ShopRepository) Create(ctx context.Context, shop *shopifysvc.Shop) error {
 	normalizedID, err := NormalizeShopID(shop.ID)
 	if err != nil {
@@ -117,6 +134,9 @@ func (r *ShopRepository) GetByDomain(ctx context.Context, domain string) (*shopi
 
 	doc, err := cur.Next()
 	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, ErrShopNotFound
+		}
 		return nil, errors.WithMessage(err, "get shop")
 	}
 

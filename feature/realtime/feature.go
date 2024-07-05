@@ -1,10 +1,13 @@
+// Known issues:
+// - Service này có thể scale lên nhiều pod, nếu user connect ws vào pod A, nhưng nếu pod B nhận được command SendMessage, pod B sẽ thực hiện send message về cho user bằng ws, nhưng pod B không có kết nối. sẽ dẫn tới lỗi.
+
 package realtime
 
 import (
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
+	"github.com/aiocean/wireset/feature/realtime/api"
 	"github.com/aiocean/wireset/feature/realtime/command"
-	"github.com/aiocean/wireset/feature/realtime/event"
-	"github.com/aiocean/wireset/feature/realtime/handler"
+	"github.com/aiocean/wireset/feature/realtime/registry"
 	"github.com/aiocean/wireset/feature/realtime/room"
 	"github.com/aiocean/wireset/fiberapp"
 	"github.com/gofiber/contrib/websocket"
@@ -15,48 +18,38 @@ import (
 
 var DefaultWireset = wire.NewSet(
 	wire.Struct(new(FeatureRealtime), "*"),
-	handler.NewWebsocketHandler,
+	api.NewWebsocketHandler,
 	room.NewRoomManager,
 	wire.Struct(new(command.SendWsMessageHandler), "*"),
-	wire.Struct(new(event.ExampleHandler), "*"),
+	registry.NewWsHandlerRegistry,
 )
 
 type FeatureRealtime struct {
 	HttpRegistry     *fiberapp.Registry
-	WebsocketHandler *handler.WebsocketHandler
+	WebsocketHandler *api.WebsocketHandler
 
 	CommandProcessor *cqrs.CommandProcessor
 	EventProcessor   *cqrs.EventProcessor
 
+	EventBus *cqrs.EventBus
+
 	SendWsMessageHandler *command.SendWsMessageHandler
-	ExampleEventHandler  *event.ExampleHandler
 }
 
 func (f *FeatureRealtime) Init() error {
 	if err := f.CommandProcessor.AddHandlers(f.SendWsMessageHandler); err != nil {
-		return errors.Wrap(err, "add command handler")
-	}
-
-	if err := f.EventProcessor.AddHandlers(f.ExampleEventHandler); err != nil {
-		return errors.Wrap(err, "add event handler")
+		return errors.Wrap(err, "add command api")
 	}
 
 	f.HttpRegistry.AddHttpMiddleware("/api/v1/ws", f.WebsocketHandler.Upgrade)
-	f.HttpRegistry.AddHttpHandlers([]*fiberapp.HttpHandler{
-		{
+	f.HttpRegistry.AddHttpHandlers(
+		&fiberapp.HttpHandler{
 			Method: fiber.MethodGet,
 			Path:   "/api/v1/ws",
 			Handlers: []fiber.Handler{
 				websocket.New(f.WebsocketHandler.Handle),
 			},
 		},
-		{
-			Method: fiber.MethodPost,
-			Path:   "/api/v1/dm",
-			Handlers: []fiber.Handler{
-				f.WebsocketHandler.SendDm,
-			},
-		},
-	})
+	)
 	return nil
 }

@@ -8,12 +8,11 @@ import (
 )
 
 type ConfigService struct {
-	ServiceName         string
-	ServiceUrl          string
-	Address             string
-	Port                string
-	Environment         string
-	DataDogAgentAddress string
+	ServiceName string
+	ServiceUrl  string
+	Address     string
+	Port        string
+	Environment string
 }
 
 type DatabaseConfig struct {

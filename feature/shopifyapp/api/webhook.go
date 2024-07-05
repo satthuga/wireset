@@ -1,4 +1,4 @@
-package handler
+package api
 
 import (
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
@@ -16,9 +16,11 @@ type WebhookHandler struct {
 }
 
 func (s *WebhookHandler) Uninstalled(c *fiber.Ctx) error {
-	s.EventBus.Publish(c.UserContext(), &model.ShopUninstalledEvt{
+	if err := s.EventBus.Publish(c.UserContext(), &model.ShopUninstalledEvt{
 		MyshopifyDomain: c.Query("shop"),
-	})
+	}); err != nil {
+		return fiber.NewError(http.StatusBadRequest, err.Error())
+	}
 
 	return c.SendStatus(http.StatusOK)
 }

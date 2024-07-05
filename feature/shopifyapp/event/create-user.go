@@ -21,20 +21,6 @@ type CreateUserHandler struct {
 	AuthClient *auth.Client
 }
 
-func NewCreateUserHandler(
-	logger *zap.Logger,
-	shopifySvc *shopifysvc.ShopifyService,
-	configSvc *configsvc.ConfigService,
-	authClient *auth.Client,
-) *CreateUserHandler {
-	return &CreateUserHandler{
-		Logger:     logger,
-		ShopifySvc: shopifySvc,
-		ConfigSvc:  configSvc,
-		AuthClient: authClient,
-	}
-}
-
 func (h *CreateUserHandler) HandlerName() string {
 	return "install-webhook"
 }
@@ -43,16 +29,14 @@ func (h *CreateUserHandler) NewEvent() interface{} {
 	return &model.ShopInstalledEvt{}
 }
 
-func (h *CreateUserHandler) RegisterBus(commandBus *cqrs.CommandBus, eventBus *cqrs.EventBus) {
-	h.EventBus = eventBus
-	h.CommandBus = commandBus
-}
-
 func (h *CreateUserHandler) Handle(ctx context.Context, event interface{}) error {
 	evt := event.(*model.ShopInstalledEvt)
 
 	_, err := h.createUser(ctx, evt)
 	if err != nil {
+		if errors.Is(err, ErrUserAlreadyExists) {
+			return nil
+		}
 		return errors.WithMessage(err, "create user failed")
 	}
 
@@ -68,12 +52,21 @@ func (h *CreateUserHandler) Handle(ctx context.Context, event interface{}) error
 	return nil
 }
 
+var ErrUserAlreadyExists = errors.New("user already exists")
+
 // createUser
 func (h *CreateUserHandler) createUser(ctx context.Context, evt *model.ShopInstalledEvt) (*auth.UserRecord, error) {
 
 	shopID, err := repository.NormalizeShopID(evt.ShopID)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check if user already exists
+	_, err = h.AuthClient.GetUser(ctx, shopID)
+	if err == nil {
+		// User already exists, return an error or handle this situation as needed
+		return nil, ErrUserAlreadyExists
 	}
 
 	password := "LKoiu987(*&okj2oiuasdfOIUasdf@Dfsadf"

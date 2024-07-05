@@ -53,6 +53,7 @@ func NewShopifyService(
 
 type ShopifyClient struct {
 	ShopifyDomain string
+	ShopifyConfig *Config
 	ApiVersion    string
 	AccessToken   string
 	configSvc     *configsvc.ConfigService
@@ -62,7 +63,7 @@ type ShopifyClient struct {
 
 func (s *ShopifyService) GetShopifyClient(shop, accessToken string) *ShopifyClient {
 	shop = strings.Replace(shop, ".myshopify.com", "", -1)
-	cacheKey := fmt.Sprintf("shopify_client_%s", shop)
+	cacheKey := fmt.Sprintf("shopify_client_%s_%s", shop, accessToken)
 	if client, ok := s.CacheSvc.Get(cacheKey); ok {
 		c := client.(ShopifyClient)
 		return &c
@@ -73,6 +74,7 @@ func (s *ShopifyService) GetShopifyClient(shop, accessToken string) *ShopifyClie
 		AccessToken:   accessToken,
 		ApiVersion:    s.ShopifyConfig.ApiVersion,
 		configSvc:     s.ConfigService,
+		ShopifyConfig: s.ShopifyConfig,
 		logger:        s.Logger,
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
@@ -115,9 +117,9 @@ func (c *ShopifyClient) DoRestRequest(method, path string, body io.Reader) (*gjs
 }
 
 type GraphQlRequest struct {
-	Query     string `json:"query"`
-	Operation string `json:"operationName,omitempty"`
-	Variables any    `json:"variables,omitempty"`
+	Query         string                 `json:"query"`
+	OperationName string                 `json:"operationName"`
+	Variables     map[string]interface{} `json:"variables"`
 }
 
 func (c *ShopifyClient) DoGraphqlRequest(request *GraphQlRequest) (*gjson.Result, error) {
@@ -223,7 +225,7 @@ func (c *ShopifyClient) InstallScript(scriptUrl string) error {
                 }
             }
         }`,
-		Operation: "scriptTagCreate",
+		OperationName: "scriptTagCreate",
 		Variables: map[string]interface{}{
 			"input": map[string]interface{}{
 				"cache":        false,
@@ -363,18 +365,18 @@ const appDataMetafieldNamespace = "aio_decor"
 func (c *ShopifyClient) GetAppDataMetaField(ownerId, key string) (string, error) {
 	requestBody := &GraphQlRequest{
 		Query: `query GetAppDataMetafield($metafieldsQueryInput: [MetafieldsQueryInput!]!) {
-		  metafields(query: $metafieldsQueryInput) {
-			edges {
-		   node {
-			 id
-			 namespace
-			 key
-			 value
-		   }
-			}
-		  }
-   		}`,
-		Operation: "GetAppDataMetafield",
+            metafields(query: $metafieldsQueryInput) {
+                edges {
+                    node {
+                        id
+                        namespace
+                        key
+                        value
+                    }
+                }
+            }
+        }`,
+		OperationName: "GetAppDataMetafield",
 		Variables: map[string]interface{}{
 			"metafieldsQueryInput": map[string]interface{}{
 				"namespace": appDataMetafieldNamespace,
@@ -396,23 +398,91 @@ func (c *ShopifyClient) GetAppDataMetaField(ownerId, key string) (string, error)
 
 	return "", nil
 }
+
+// GetShopMetaField accept ownerId, key
+func (c *ShopifyClient) GetShopMetaField(namespace, key string) (string, error) {
+	requestBody := &GraphQlRequest{
+		Query: `query GetShopMetafield($namespace: String!, $key: String!) {
+			shop {
+				metafield(namespace: $namespace, key: $key) {
+					value
+				}
+			}
+		}`,
+		Variables: map[string]interface{}{
+			"namespace": namespace,
+			"key":       key,
+		},
+	}
+
+	response, err := c.DoGraphqlRequest(requestBody)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get shop metafield")
+	}
+
+	metafield := response.Get("shop.metafield")
+	if metafield.Exists() {
+		return metafield.Get("value").String(), nil
+	}
+
+	return "", nil
+}
+
+func (c *ShopifyClient) SetShopMetaField(ownerId, key, value string) error {
+	requestBody := &GraphQlRequest{
+		Query: `mutation CreateShopMetafield($metafieldsSetInput: [MetafieldsSetInput!]!) {
+			metafieldsSet(metafields: $metafieldsSetInput) {
+				metafields {
+					id
+					namespace
+					key
+					value
+				}
+				userErrors {
+					field
+					message
+				}
+			}
+		}`,
+		OperationName: "CreateShopMetafield",
+		Variables: map[string]interface{}{
+			"metafieldsSetInput": []map[string]interface{}{
+				{
+					"namespace": "aio_decor",
+					"key":       key,
+					"type":      "single_line_text_field",
+					"value":     value,
+					"ownerId":   ownerId,
+				},
+			},
+		},
+	}
+
+	_, err := c.DoGraphqlRequest(requestBody)
+	if err != nil {
+		return errors.Wrap(err, "failed to create shop metafield")
+	}
+
+	return nil
+}
+
 func (c *ShopifyClient) SetAppDataMetaField(ownerId, key, value string) error {
 	requestBody := &GraphQlRequest{
 		Query: `mutation CreateAppDataMetafield($metafieldsSetInput: [MetafieldsSetInput!]!) {
-   metafieldsSet(metafields: $metafieldsSetInput) {
-    metafields {
-     id
-     namespace
-     key
-     value
-    }
-    userErrors {
-     field
-     message
-    }
-   }
-  }`,
-		Operation: "CreateAppDataMetafield",
+            metafieldsSet(metafields: $metafieldsSetInput) {
+                metafields {
+                    id
+                    namespace
+                    key
+                    value
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }`,
+		OperationName: "CreateAppDataMetafield",
 		Variables: map[string]interface{}{
 			"metafieldsSetInput": []map[string]interface{}{
 				{
@@ -432,4 +502,109 @@ func (c *ShopifyClient) SetAppDataMetaField(ownerId, key, value string) error {
 	}
 
 	return nil
+}
+
+type Subscription struct {
+	ID                        string
+	TrialDays                 int
+	CurrentPeriodEnd          string
+	Status                    string
+	Test                      bool
+	CurrentPeriodEndFormatted string
+}
+
+var ErrorSubscriptionNotFound = errors.New("subscription not found")
+
+func (c *ShopifyClient) GetSubscription() (*Subscription, error) {
+	requestBody := &GraphQlRequest{
+		Query: `{
+		  currentAppInstallation {
+			activeSubscriptions{
+				id
+				name
+				trialDays
+				status
+				test
+				currentPeriodEnd
+			}
+		  }
+		}`,
+	}
+
+	response, err := c.DoGraphqlRequest(requestBody)
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to get subscription")
+	}
+
+	subscriptionData := response.Get("currentAppInstallation.activeSubscriptions.0")
+	if !subscriptionData.Exists() {
+		return nil, ErrorSubscriptionNotFound
+	}
+
+	subscription := &Subscription{
+		ID:               subscriptionData.Get("id").String(),
+		TrialDays:        int(subscriptionData.Get("trialDays").Int()),
+		CurrentPeriodEnd: subscriptionData.Get("currentPeriodEnd").String(),
+		Status:           subscriptionData.Get("status").String(),
+	}
+
+	return subscription, nil
+}
+
+func (c *ShopifyClient) CreateSubscription(price float32) (*gjson.Result, error) {
+	name := "premium"
+	returnUrl := "https://admin.shopify.com/store/" + c.ShopifyDomain + "/apps/" + c.ShopifyConfig.ClientId
+	lineItems := []map[string]interface{}{
+		{
+			"plan": map[string]interface{}{
+				"appRecurringPricingDetails": map[string]interface{}{
+					"price": map[string]interface{}{
+						"amount":       price,
+						"currencyCode": "USD",
+					},
+					"interval": "EVERY_30_DAYS",
+				},
+			},
+		},
+	}
+
+	requestBody := &GraphQlRequest{
+		Query: `mutation AppSubscriptionCreate(
+            $name: String!
+            $lineItems: [AppSubscriptionLineItemInput!]!
+            $returnUrl: URL!
+        ) {
+            appSubscriptionCreate(
+                name: $name
+                returnUrl: $returnUrl
+                lineItems: $lineItems
+                test: true
+            ) {
+                userErrors {
+                    field
+                    message
+                }
+                appSubscription {
+                    id
+                }
+                confirmationUrl
+            }
+        }`,
+		Variables: map[string]interface{}{
+			"name":      name,
+			"returnUrl": returnUrl,
+			"lineItems": lineItems,
+		},
+	}
+
+	response, err := c.DoGraphqlRequest(requestBody)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create subscription")
+	}
+
+	return response, nil
+}
+
+func NormaizeShopifyDomain(shopifyDomain string) string {
+	return strings.Replace(shopifyDomain, ".myshopify.com", "", -1) + ".myshopify.com"
 }

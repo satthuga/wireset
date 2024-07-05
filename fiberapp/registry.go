@@ -21,7 +21,7 @@ func NewRegistry() *Registry {
 	}
 }
 
-func (r *Registry) AddHttpHandlers(handlers []*HttpHandler) {
+func (r *Registry) AddHttpHandlers(handlers ...*HttpHandler) {
 	for _, handler := range handlers {
 		r.HttpHandlers[createHandlerID(handler.Method, handler.Path)] = handler
 	}

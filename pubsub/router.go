@@ -23,7 +23,7 @@ func NewRouter(
 	}
 
 	router.AddMiddleware(
-		middleware.Recoverer,
+		//middleware.Recoverer,
 		middleware.CorrelationID,
 		Retry{
 			MaxRetries:      2,
@@ -31,7 +31,7 @@ func NewRouter(
 			Logger:          waterLogger,
 			OnFailed: func(msg *message.Message, err error) ([]*message.Message, error) {
 				// save event to collection
-				logger.Error("Router: error handling message", zap.Error(err))
+				logger.Error("Router: error handling message", zap.String("err", err.Error()))
 				return nil, nil
 			},
 		}.Middleware,

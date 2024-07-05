@@ -30,7 +30,7 @@ func (h *Manager) IsRoomExists(roomName string) bool {
 	return ok
 }
 
-// AddNewRoom adds a new room to the handler.
+// AddNewRoom adds a new room to the api.
 func (h *Manager) AddNewRoom(roomName string) (*Room, error) {
 	h.Mu.Lock()
 	defer h.Mu.Unlock()

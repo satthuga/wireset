@@ -17,7 +17,7 @@ type NotifyDiscordOnInstallHandler struct {
 	commandBus *cqrs.CommandBus
 }
 
-// this handler used to init the wallet when user registered
+// this api used to init the wallet when user registered
 
 func NewNotifyDiscordOnInstallHandler(
 	logger *zap.Logger,

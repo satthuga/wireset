@@ -14,12 +14,6 @@ type WelcomeHandler struct {
 	CommandBus *cqrs.CommandBus
 }
 
-// NewWelcomeHandler creates a new WelcomeHandler.
-func NewWelcomeHandler(logger *zap.Logger) *WelcomeHandler {
-	return &WelcomeHandler{
-		Logger: logger,
-	}
-}
 func (h *WelcomeHandler) HandlerName() string {
 	return "send-welcome-email"
 }

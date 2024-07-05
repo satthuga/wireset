@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/aiocean/wireset/configsvc"
 	"github.com/aiocean/wireset/fiberapp"
-	"github.com/aiocean/wireset/tracersvc"
 	fiber "github.com/gofiber/fiber/v2"
 	"github.com/pkg/errors"
 	"os"
@@ -16,7 +15,6 @@ import (
 
 type ApiServer struct {
 	MsgRouter           *message.Router
-	TracerSvc           *tracersvc.TracerSvc
 	ConfigSvc           *configsvc.ConfigService
 	LogSvc              *zap.Logger
 	FiberSvc            *fiber.App
@@ -30,10 +28,6 @@ var DefaultWireset = wire.NewSet(
 )
 
 func (s *ApiServer) Start(ctx context.Context) chan error {
-	if s.ConfigSvc.DataDogAgentAddress != "" {
-		s.TracerSvc.Start()
-	}
-
 	errChan := make(chan error, 1)
 
 	// in it features

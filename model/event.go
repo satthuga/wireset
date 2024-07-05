@@ -12,8 +12,7 @@ type ShopUninstalledEvt struct {
 
 type ShopCheckedInEvt struct {
 	MyshopifyDomain string
-	AccessToken     string
-	ShopID          string
+	SessionToken    string
 }
 
 type ServerStartedEvt struct {
