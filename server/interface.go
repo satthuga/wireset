@@ -4,6 +4,7 @@ import "context"
 
 type Feature interface {
 	Init() error
+	Name() string
 }
 
 type Server interface {
