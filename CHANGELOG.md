@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/aiocean/wireset/compare/v0.8.0...v0.9.0) (2024-07-17)
+
+
+### Features
+
+* support health check registry ([20fd8d0](https://github.com/aiocean/wireset/commit/20fd8d07c72489f2465517cb707e788ecd30acf2))
+
 ## [0.8.0](https://github.com/aiocean/wireset/compare/v0.7.0...v0.8.0) (2024-07-05)
 
 
