@@ -23,11 +23,13 @@ import (
 var DefaultWireset = wire.NewSet(
 	NewFiberApp,
 	NewRegistry,
+	NewHealthRegistry,
 )
 
 func NewFiberApp(
 	logsvc *zap.Logger,
 	cfg *configsvc.ConfigService,
+	healthRegistry *HealthRegistry,
 ) (*fiber.App, func(), error) {
 
 	logger := logsvc.With(zap.Strings("tags", []string{"fiber"}))
@@ -97,9 +99,13 @@ func NewFiberApp(
 	}
 
 	app.Get("/healthz", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"status": "ok",
-		})
+		if err := healthRegistry.Check(); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		return c.SendStatus(fiber.StatusOK)
 	})
 
 	return app, cleanup, nil

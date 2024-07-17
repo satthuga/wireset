@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"cloud.google.com/go/firestore/apiv1/firestorepb"
 	"context"
 	"github.com/pkg/errors"
 	"time"
@@ -146,6 +147,24 @@ func (r *ShopRepository) GetByDomain(ctx context.Context, domain string) (*shopi
 	}
 
 	return &shop, nil
+}
+
+// CountShops returns the number of shops
+func (r *ShopRepository) CountShops(ctx context.Context) (int64, error) {
+	// count the number of shops from the firestore
+	aggregationQuery := r.firestoreClient.Collection("shops").NewAggregationQuery().WithCount("all")
+	results, err := aggregationQuery.Get(ctx)
+	if err != nil {
+		return 0, errors.WithMessage(err, "get results")
+	}
+
+	count, ok := results["all"]
+	if !ok {
+		return 0, errors.New("count not found")
+	}
+
+	countValue := count.(*firestorepb.Value)
+	return countValue.GetIntegerValue(), nil
 }
 
 func (r *ShopRepository) UpdateLastLogin(ctx context.Context, shopID string, at *time.Time) error {
