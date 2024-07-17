@@ -76,7 +76,6 @@ func NewFiberApp(
 	app.Use(requestid.New())
 
 	cleanup := func() {
-		logger.Info("Cleaning up")
 		if err := app.Shutdown(); err != nil {
 			logger.Error("failed to shut down fiber app", zap.Error(err))
 			return
