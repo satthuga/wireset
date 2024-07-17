@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/aiocean/wireset/compare/v0.9.0...v0.9.1) (2024-07-17)
+
+
+### Bug Fixes
+
+* update go mod ([695baa4](https://github.com/aiocean/wireset/commit/695baa491bfba745f590284f3813129eeef32523))
+
 ## [0.9.0](https://github.com/aiocean/wireset/compare/v0.8.0...v0.9.0) (2024-07-17)
 
 
