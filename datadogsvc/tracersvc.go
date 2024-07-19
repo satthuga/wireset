@@ -7,12 +7,13 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
+// DefaultWireset is a wire provider set that provides a DatadogSvc
+var DefaultWireset = wire.NewSet(NewDatadogSvc)
+
 type DatadogSvc struct {
 	confSvc *configsvc.ConfigService
 	logger  *zap.Logger
 }
-
-var DefaultWireset = wire.NewSet(NewDatadogSvc)
 
 func NewDatadogSvc(
 	confSvc *configsvc.ConfigService,
@@ -27,7 +28,6 @@ func NewDatadogSvc(
 }
 
 func (s *DatadogSvc) Start() {
-
 	tracer.Start(
 		tracer.WithService(s.confSvc.ServiceName),
 		tracer.WithEnv(s.confSvc.Environment),

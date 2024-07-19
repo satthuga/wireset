@@ -1,6 +1,8 @@
 package wireset
 
 import (
+	"github.com/google/wire"
+
 	"github.com/aiocean/wireset/cachesvc"
 	"github.com/aiocean/wireset/feature/shopifyapp"
 	"github.com/aiocean/wireset/fiberapp"
@@ -11,48 +13,37 @@ import (
 	"github.com/aiocean/wireset/repository"
 	"github.com/aiocean/wireset/server"
 	"github.com/aiocean/wireset/shopifysvc"
-	"github.com/google/wire"
 )
 
-// ShopifyAppWireset is a wire set that provides dependencies for a Shopify app.
-// It includes dependencies for repositories, Shopify service, Fiber app, Firebase authentication service,
-// server, tracing service, logging service, pubsub service, and cache service.
-var ShopifyAppWireset = wire.NewSet(
+var Common = wire.NewSet(
+	fiberapp.DefaultWireset,
+	server.DefaultWireset,
+	logsvc.DefaultWireset,
+	pubsub.DefaultWireset,
+	cachesvc.DefaultWireset,
+)
+
+var ShopifyApp = wire.NewSet(
+	Common,
 	repository.ShopRepoWireset,
 	repository.TokenRepoWireset,
 	repository.StateRepoWireset,
 	shopifysvc.DefaultWireset,
-	fiberapp.DefaultWireset,
 	firestoresvc.DefaultWireset,
 	fireauthsvc.DefaultWireset,
-	server.DefaultWireset,
-	logsvc.DefaultWireset,
-	pubsub.DefaultWireset,
-	cachesvc.DefaultWireset,
 	shopifyapp.DefaultWireset,
 )
 
-// NormalAppWireset is a wire set that provides dependencies for a normal app.
-// It includes dependencies for Fiber app, Firebase authentication service, server,
-// tracing service, logging service, pubsub service, and cache service.
-var NormalAppWireset = wire.NewSet(
-	fiberapp.DefaultWireset,
+var NormalApp = wire.NewSet(
+	Common,
 	fireauthsvc.DefaultWireset,
 	firestoresvc.DefaultWireset,
-	server.DefaultWireset,
-	logsvc.DefaultWireset,
-	pubsub.DefaultWireset,
-	cachesvc.DefaultWireset,
 )
 
-var MinimalAppWireset = wire.NewSet(
-	fiberapp.DefaultWireset,
-	server.DefaultWireset,
-	logsvc.DefaultWireset,
-	pubsub.DefaultWireset,
-	cachesvc.DefaultWireset,
-)
+// MinimalApp provides minimal dependencies for a basic app
+var MinimalApp = Common
 
-var CliAppWireset = wire.NewSet(
+// CliApp provides dependencies for a CLI app
+var CliApp = wire.NewSet(
 	logsvc.DefaultWireset,
 )

@@ -9,28 +9,21 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// DefaultWireset provides the default wire set for the logging service
 var DefaultWireset = wire.NewSet(NewLogger, DefaultConfig)
 
-func DefaultConfig() (zap.Config, error) {
+// Config represents the configuration for the logging service
+type Config struct {
+	Environment string
+	TimeZone    *time.Location
+	LogLevel    zapcore.Level
+}
 
-	loc := time.FixedZone("UTC+7", 7*60*60)
-
+// DefaultConfig returns a default configuration for the logging service
+func DefaultConfig() (*Config, error) {
 	environment := os.Getenv("ENVIRONMENT")
-
-	encoderConfig := zapcore.EncoderConfig{
-		TimeKey:       "ts",
-		LevelKey:      "level",
-		NameKey:       "logger",
-		CallerKey:     "caller",
-		MessageKey:    "msg",
-		StacktraceKey: "stacktrace",
-		LineEnding:    zapcore.DefaultLineEnding,
-		EncodeLevel:   zapcore.LowercaseLevelEncoder,
-		EncodeTime: func(t time.Time, pae zapcore.PrimitiveArrayEncoder) {
-			zapcore.RFC3339TimeEncoder(t.In(loc), pae)
-		},
-		EncodeDuration: zapcore.MillisDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
+	if environment == "" {
+		environment = "production"
 	}
 
 	logLevel := zap.ErrorLevel
@@ -38,29 +31,54 @@ func DefaultConfig() (zap.Config, error) {
 		logLevel = zap.DebugLevel
 	}
 
+	loc := time.FixedZone("UTC+7", 7*60*60)
+
+	return &Config{
+		Environment: environment,
+		TimeZone:    loc,
+		LogLevel:    logLevel,
+	}, nil
+}
+
+// NewLogger creates a new zap logger based on the provided configuration
+func NewLogger(config *Config) (*zap.Logger, error) {
+	encoderConfig := zapcore.EncoderConfig{
+		TimeKey:        "ts",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		FunctionKey:    zapcore.OmitKey,
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeTime:     zapcore.TimeEncoderOfLayout(time.RFC3339),
+		EncodeDuration: zapcore.MillisDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+	}
+
 	zapConfig := zap.Config{
-		Level:             zap.NewAtomicLevelAt(logLevel),
-		Development:       environment == "development",
+		Level:             zap.NewAtomicLevelAt(config.LogLevel),
+		Development:       config.Environment == "development",
 		EncoderConfig:     encoderConfig,
-		DisableStacktrace: true,
-		DisableCaller:     true,
+		DisableStacktrace: config.Environment != "development",
+		DisableCaller:     config.Environment != "development",
 		Encoding:          "json",
 		OutputPaths:       []string{"stderr"},
 		ErrorOutputPaths:  []string{"stderr"},
 	}
 
-	return zapConfig, nil
-}
-
-func NewLogger(zapConfig zap.Config) (*zap.Logger, error) {
-
 	logger, err := zapConfig.Build(zap.WrapCore(func(c zapcore.Core) zapcore.Core {
-		return ignoreHealthCheckCore{c: c}
+		return zapcore.NewCore(
+			zapcore.NewJSONEncoder(encoderConfig),
+			zapcore.AddSync(os.Stderr),
+			config.LogLevel,
+		)
 	}))
+
 	if err != nil {
 		return nil, err
 	}
 
-	return logger, nil
-
+	return logger.WithOptions(zap.WithCaller(config.Environment == "development")), nil
 }

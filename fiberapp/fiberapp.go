@@ -4,20 +4,20 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/aiocean/wireset/configsvc"
+	"github.com/gofiber/contrib/fiberzap"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/healthcheck"
+	"github.com/gofiber/fiber/v2/middleware/idempotency"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/proxy"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
+	"github.com/google/wire"
 	"go.uber.org/zap"
 	"net/url"
 	"os"
 	"time"
-
-	"github.com/gofiber/contrib/fiberzap"
-	"github.com/gofiber/fiber/v2/middleware/compress"
-	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/idempotency"
-	"github.com/google/wire"
 )
 
 var DefaultWireset = wire.NewSet(
@@ -26,21 +26,38 @@ var DefaultWireset = wire.NewSet(
 	NewHealthRegistry,
 )
 
+type FiberAppConfig struct {
+	BodyLimit   int
+	ServiceName string
+	IdleTimeout time.Duration
+	MaxRequests int
+	RateLimit   time.Duration
+	ProxyURL    string
+}
+
 func NewFiberApp(
 	logsvc *zap.Logger,
 	cfg *configsvc.ConfigService,
 	healthRegistry *HealthRegistry,
 ) (*fiber.App, func(), error) {
-
 	logger := logsvc.With(zap.Strings("tags", []string{"fiber"}))
 
+	config := FiberAppConfig{
+		BodyLimit:   50 * 1024 * 1024,
+		ServiceName: cfg.ServiceName,
+		IdleTimeout: 10 * time.Second,
+		MaxRequests: 500,
+		RateLimit:   30 * time.Second,
+		ProxyURL:    os.Getenv("PROXY_URL"),
+	}
+
 	app := fiber.New(fiber.Config{
-		BodyLimit:             50 * 1024 * 1024,
-		AppName:               cfg.ServiceName,
+		BodyLimit:             config.BodyLimit,
+		AppName:               config.ServiceName,
 		JSONEncoder:           json.Marshal,
 		JSONDecoder:           json.Unmarshal,
 		DisableStartupMessage: true,
-		IdleTimeout:           10 * time.Second,
+		IdleTimeout:           config.IdleTimeout,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 
@@ -69,8 +86,8 @@ func NewFiberApp(
 	}))
 	app.Use(idempotency.New())
 	app.Use(limiter.New(limiter.Config{
-		Max:               500,
-		Expiration:        30 * time.Second,
+		Max:               config.MaxRequests,
+		Expiration:        config.RateLimit,
 		LimiterMiddleware: limiter.SlidingWindow{},
 	}))
 	app.Use(requestid.New())
@@ -85,27 +102,30 @@ func NewFiberApp(
 	}
 
 	// this is used for local development, to proxy to the real endpoint
-	proxyUrl := os.Getenv("PROXY_URL")
-	if proxyUrl != "" {
-
+	if config.ProxyURL != "" {
 		app.Use(func(c *fiber.Ctx) error {
 			if c.Path() == "/healthz" {
 				return c.Next()
 			}
-			endpointUrl, _ := url.JoinPath(proxyUrl, c.Path())
+			endpointUrl, _ := url.JoinPath(config.ProxyURL, c.Path())
 			return proxy.Forward(endpointUrl)(c)
 		})
 	}
 
-	app.Get("/healthz", func(c *fiber.Ctx) error {
-		if err := healthRegistry.Check(); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
+	app.Use(healthcheck.New(healthcheck.Config{
+		LivenessProbe: func(c *fiber.Ctx) bool {
+			if err := healthRegistry.Check(); err != nil {
+				return false
+			}
 
-		return c.SendStatus(fiber.StatusOK)
-	})
+			return true
+		},
+		LivenessEndpoint: "/healthz",
+		ReadinessProbe: func(c *fiber.Ctx) bool {
+			return true
+		},
+		ReadinessEndpoint: "/ready",
+	}))
 
 	return app, cleanup, nil
 }
