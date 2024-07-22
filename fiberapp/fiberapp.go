@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/aiocean/wireset/configsvc"
-	"github.com/gofiber/contrib/fiberzap"
+	"github.com/gofiber/contrib/fiberzap/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
