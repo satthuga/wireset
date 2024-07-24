@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.2](https://github.com/aiocean/wireset/compare/v0.9.1...v0.9.2) (2024-07-22)
+
+
+### Bug Fixes
+
+* update health check ([cb2ec55](https://github.com/aiocean/wireset/commit/cb2ec5522c432c80f120d52dea8c85cca2900d75))
+
 ## [0.9.1](https://github.com/aiocean/wireset/compare/v0.9.0...v0.9.1) (2024-07-17)
 
 
