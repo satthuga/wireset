@@ -78,6 +78,7 @@ func NewFiberApp(
 	app.Use(cors.New())
 	app.Use(fiberzap.New(fiberzap.Config{
 		Logger: logger,
+		SkipURIs: []string{"/healthz"},
 	}))
 
 	// compress
